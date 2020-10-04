@@ -1,0 +1,3 @@
+export CXXFLAGS=-I\ /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include\ -I\ /Volumes/MyTestVolume/Xcode11.5.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/11.0.3/include\ -isystem\ /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include/
+    export CXXFLAGS="$CXXFLAGS -Wno-argument-outside-range -isysroot \"/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk\" -isysroot \"/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk\" -isystem /Volumes/MyTestVolume/Xcode11.5.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"
+    make
