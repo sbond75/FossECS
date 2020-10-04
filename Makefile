@@ -20,14 +20,17 @@
 
 # https://stackoverflow.com/questions/40621451/makefile-automatically-compile-all-c-files-keeping-o-files-in-separate-folde
 
+CC := /usr/bin/clang++
 SRC := src
 OBJ := obj
+
+CXXFLAGS=$(NIX_CFLAGS_COMPILE) -std=c++11
 
 SOURCES := $(wildcard $(SRC)/*.cpp) $(wildcard $(SRC)/Bengine/*.cpp)
 OBJECTS := $(patsubst $(SRC)/%.cpp, $(OBJ)/%.o, $(SOURCES))
 
 all: $(OBJECTS)
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $^ -o $@
 
 $(OBJ)/%.o: $(SRC)/%.cpp
-	$(CC) $(LDFLAGS) -lgl -lSDL2 -lSDL2_ttf -lglew $(CXXFLAGS) -I$(SRC) -c $< -o $@
+	$(CC) $(CXXFLAGS) -I$(SRC) -Ideps/include -c $< -o $@
