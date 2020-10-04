@@ -1,4 +1,6 @@
-#version 130
+//#version 130
+#version 400
+
 //The vertex shader operates on each vertex
 
 //input data from the VBO. Each vertex is 2 floats

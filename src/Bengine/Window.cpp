@@ -34,6 +34,11 @@ namespace Bengine {
             fatalError("SDL Window could not be created!");
         }
 
+	// Prepare OpenGL version
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    
         //Set up our OpenGL context
         SDL_GLContext glContext = SDL_GL_CreateContext(_sdlWindow);
         if (glContext == nullptr) {
