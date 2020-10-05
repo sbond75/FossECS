@@ -60,7 +60,8 @@ endif
 
 # https://stackoverflow.com/questions/40621451/makefile-automatically-compile-all-c-files-keeping-o-files-in-separate-folde
 
-CC := /usr/bin/clang++
+#CC := /usr/bin/clang++
+CC := clang++
 SRC := src
 OBJ := obj
 
