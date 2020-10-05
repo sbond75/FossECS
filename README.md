@@ -23,7 +23,7 @@ Todo
 	- 2D graphics (with [OpenGL](https://www.opengl.org/) and [GLEW](http://glew.sourceforge.net/) and modern (high performance) techniques such as sprite batches and shaders)
 	- Window creation & keyboard and mouse input (with [SDL](https://www.libsdl.org/))
 	- Texture loading
-	- 2D audio (with [SDL Mixer](https://www.libsdl.org/projects/SDL_mixer/)
+	- 2D audio (with [SDL Mixer](https://www.libsdl.org/projects/SDL_mixer/))
 	- Font rendering (with [SDL TTF](https://www.libsdl.org/projects/SDL_ttf/))
 	- GUI (currently able to use [CEGUI](http://cegui.org.uk/) but this project aims to replace it)
 	- Rigid-body physics (with [Box2D](https://box2d.org/))
