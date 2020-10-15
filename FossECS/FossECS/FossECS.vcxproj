@@ -1,0 +1,158 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{0B1C0517-0A6E-43EF-BEE6-853BAEAFDAF0}</ProjectGuid>
+    <Keyword>MakeFileProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <NMakeBuildCommandLine>make -j4</NMakeBuildCommandLine>
+    <NMakeOutput>FossECS.exe</NMakeOutput>
+    <NMakePreprocessorDefinitions>WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <IncludePath>$(SolutionDir)..\src;$(SolutionDir)..\deps\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\deps\lib\$(Configuration);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <NMakeBuildCommandLine>make -j4</NMakeBuildCommandLine>
+    <NMakeOutput>FossECS.exe</NMakeOutput>
+    <NMakePreprocessorDefinitions>WIN32;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <IncludePath>$(SolutionDir)..\src;$(SolutionDir)..\deps\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\deps\lib\$(Configuration);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Link>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;GLEW32.lib;SDL2_mixer.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Link>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;GLEW32.lib;SDL2_mixer.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Text Include="..\..\src\Bengine\ReadMe.txt" />
+    <Text Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Bengine\AudioEngine.cpp" />
+    <ClCompile Include="..\..\src\Bengine\Bengine.cpp" />
+    <ClCompile Include="..\..\src\Bengine\BengineErrors.cpp" />
+    <ClCompile Include="..\..\src\Bengine\Camera2D.cpp" />
+    <ClCompile Include="..\..\src\Bengine\DebugRenderer.cpp" />
+    <ClCompile Include="..\..\src\Bengine\GLSLProgram.cpp" />
+    <ClCompile Include="..\..\src\Bengine\GUI.cpp" />
+    <ClCompile Include="..\..\src\Bengine\ImageLoader.cpp" />
+    <ClCompile Include="..\..\src\Bengine\IMainGame.cpp" />
+    <ClCompile Include="..\..\src\Bengine\InputManager.cpp" />
+    <ClCompile Include="..\..\src\Bengine\IOManager.cpp" />
+    <ClCompile Include="..\..\src\Bengine\ParticleBatch2D.cpp" />
+    <ClCompile Include="..\..\src\Bengine\ParticleEngine2D.cpp" />
+    <ClCompile Include="..\..\src\Bengine\picoPNG.cpp" />
+    <ClCompile Include="..\..\src\Bengine\ResourceManager.cpp" />
+    <ClCompile Include="..\..\src\Bengine\ScreenList.cpp" />
+    <ClCompile Include="..\..\src\Bengine\Sprite.cpp" />
+    <ClCompile Include="..\..\src\Bengine\SpriteBatch.cpp" />
+    <ClCompile Include="..\..\src\Bengine\SpriteFont.cpp" />
+    <ClCompile Include="..\..\src\Bengine\TextureCache.cpp" />
+    <ClCompile Include="..\..\src\Bengine\Timing.cpp" />
+    <ClCompile Include="..\..\src\Bengine\Window.cpp" />
+    <ClCompile Include="..\..\src\Bullet.cpp" />
+    <ClCompile Include="..\..\src\main.cpp" />
+    <ClCompile Include="..\..\src\MainGame.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\Bengine\AudioEngine.h" />
+    <ClInclude Include="..\..\src\Bengine\Bengine.h" />
+    <ClInclude Include="..\..\src\Bengine\BengineErrors.h" />
+    <ClInclude Include="..\..\src\Bengine\Camera2D.h" />
+    <ClInclude Include="..\..\src\Bengine\DebugRenderer.h" />
+    <ClInclude Include="..\..\src\Bengine\GLSLProgram.h" />
+    <ClInclude Include="..\..\src\Bengine\GLTexture.h" />
+    <ClInclude Include="..\..\src\Bengine\GUI.h" />
+    <ClInclude Include="..\..\src\Bengine\IGameScreen.h" />
+    <ClInclude Include="..\..\src\Bengine\ImageLoader.h" />
+    <ClInclude Include="..\..\src\Bengine\IMainGame.h" />
+    <ClInclude Include="..\..\src\Bengine\InputManager.h" />
+    <ClInclude Include="..\..\src\Bengine\IOManager.h" />
+    <ClInclude Include="..\..\src\Bengine\ParticleBatch2D.h" />
+    <ClInclude Include="..\..\src\Bengine\ParticleEngine2D.h" />
+    <ClInclude Include="..\..\src\Bengine\picoPNG.h" />
+    <ClInclude Include="..\..\src\Bengine\ResourceManager.h" />
+    <ClInclude Include="..\..\src\Bengine\ScreenList.h" />
+    <ClInclude Include="..\..\src\Bengine\Sprite.h" />
+    <ClInclude Include="..\..\src\Bengine\SpriteBatch.h" />
+    <ClInclude Include="..\..\src\Bengine\SpriteFont.h" />
+    <ClInclude Include="..\..\src\Bengine\TextureCache.h" />
+    <ClInclude Include="..\..\src\Bengine\TileSheet.h" />
+    <ClInclude Include="..\..\src\Bengine\Timing.h" />
+    <ClInclude Include="..\..\src\Bengine\Vertex.h" />
+    <ClInclude Include="..\..\src\Bengine\Window.h" />
+    <ClInclude Include="..\..\src\Bullet.h" />
+    <ClInclude Include="..\..\src\MainGame.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\Bengine\Bengine.vcxproj" />
+    <None Include="..\..\src\Bengine\Bengine.vcxproj.filters" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

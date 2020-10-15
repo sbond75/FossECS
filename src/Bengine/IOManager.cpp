@@ -4,8 +4,11 @@
 #include <fstream>
 
 // Namespace alias
-//namespace fs = std::tr2::sys;
+#if _MSC_VER == 1900
+namespace fs = std::tr2::sys;
+#else
 namespace fs = std::__fs::filesystem;
+#endif
 
 namespace Bengine {
 
