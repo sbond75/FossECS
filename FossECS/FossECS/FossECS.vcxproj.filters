@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Bengine">
+      <UniqueIdentifier>{48b63dd2-7725-47b5-bbb2-ee173b4772be}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
+    <Text Include="..\..\src\Bengine\ReadMe.txt">
+      <Filter>Source Files\Bengine</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Bullet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MainGame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\AudioEngine.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\Bengine.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\BengineErrors.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\Camera2D.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\DebugRenderer.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\GLSLProgram.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\GUI.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\ImageLoader.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\IMainGame.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\InputManager.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\IOManager.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\ParticleBatch2D.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\ParticleEngine2D.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\picoPNG.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\ResourceManager.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\ScreenList.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\Sprite.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\SpriteBatch.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\SpriteFont.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\TextureCache.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\Timing.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bengine\Window.cpp">
+      <Filter>Source Files\Bengine</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\Bullet.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MainGame.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\AudioEngine.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\Bengine.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\BengineErrors.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\Camera2D.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\DebugRenderer.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\GLSLProgram.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\GLTexture.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\GUI.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\IGameScreen.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\ImageLoader.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\IMainGame.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\InputManager.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\IOManager.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\ParticleBatch2D.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\ParticleEngine2D.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\picoPNG.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\ResourceManager.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\ScreenList.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\Sprite.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\SpriteBatch.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\SpriteFont.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\TextureCache.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\TileSheet.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\Timing.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\Vertex.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bengine\Window.h">
+      <Filter>Source Files\Bengine</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\Bengine\Bengine.vcxproj">
+      <Filter>Source Files\Bengine</Filter>
+    </None>
+    <None Include="..\..\src\Bengine\Bengine.vcxproj.filters">
+      <Filter>Source Files\Bengine</Filter>
+    </None>
+  </ItemGroup>
+</Project>
