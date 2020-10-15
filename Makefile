@@ -83,7 +83,7 @@ export MACOSX_DEPLOYMENT_TARGET = 10.15
 
 all: fossECS
 
-fossECS: $(OBJECTS)
+ecs: $(OBJECTS)
 	@echo Detected OS: $(HostOS)
 	 # @echo $(MACOS_LIBS)
 	$(CC) $^ -o $@ $(LIBS) $(LDFLAGS)
