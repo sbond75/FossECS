@@ -19,6 +19,16 @@
 
 #include <vector>
 
+
+struct sBall {
+    float px, py; // Position vector
+    float vx, vy; // Velocity vector
+    float ax, ay; // Acceleration vector
+    float radius;
+
+    int id; // ID number
+};
+
 enum class GameState {PLAY, EXIT};
 
 //Our example game class, just for testing purposes right now
@@ -33,6 +43,9 @@ public:
 private:
     void initSystems();
     void initShaders();
+    void initGame();
+    void addBall(float x, float y, float r = 5.0f);
+    void update();
     void gameLoop();
     void processInput();
     void drawGame();
@@ -51,6 +64,9 @@ private:
     Bengine::FpsLimiter _fpsLimiter;
 
     std::vector<Bullet> _bullets;
+    std::vector<sBall> vecBalls;
+    size_t selectedBallIndex = -1;
+    //std::vector<std::pair<float, float>> modelCircle; // A circle in its simplest form
     
     float _maxFPS;
     float _fps;

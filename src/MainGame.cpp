@@ -51,6 +51,74 @@ void MainGame::initShaders() {
     _colorProgram.linkShaders();
 }
 
+void MainGame::initGame() {
+    // Define Circle Model
+    // modelCircle.push_back({ 0.0f, 0.0f });
+    // int nPoints = 20;
+    // for (int i = 0; i < nPoints; i++) {
+    //     modelCircle.push_back({ cosf(i / (float)(nPoints - 1) * 2.0f * PI), sinf(i / (float)(nPoints - 1) * 2.0f * PI) });
+    // }
+
+    float fDefaultRad = 4.0f;
+    addBall(_screenWidth * 0.25f, _screenHeight * 0.5f, fDefaultRad);
+    addBall(_screenWidth * 0.75f, _screenHeight * 0.5f, fDefaultRad);
+}
+
+void MainGame::addBall(float x, float y, float r) {
+    sBall b;
+    b.px = x; b.py = y;
+    b.vx = 0; b.vy = 0;
+    b.ax = 0; b.ay = 0;
+    b.radius = r;
+
+    //b.id = vecBalls.size();
+}
+
+void MainGame::update() {
+    _camera.update();
+
+    // Update all bullets
+    for (size_t i = 0; i < _bullets.size();) {
+        if (_bullets[i].update() == true) {
+            _bullets[i] = _bullets.back();
+            _bullets.pop_back();
+        } else {
+            i++;
+        }
+    }
+
+    auto doCirclesOverlap = [](float x1, float y1, float x2, float y2, float r1, float r2) {
+        return fabs((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)) <= (r1+r2)*(r1+r2);
+    }
+    // Update balls
+    for (size_t i = 0; i < vecBalls.size(); i++) {
+        sBall& ball = vecBalls[i];
+        for (size_t j = 0; j < vecBalls.size(); j++) {
+            sBall& target = vecBalls[j];
+            if (i != j) { // Else, don't test against ourself
+                if (doCirclesOverlap(ball.px, ball.py, ball.radius, target.px, target.py, target.radius)) {
+                    // We have a collision
+
+                    // Static resolution: move ball and target out of their overlapping part
+
+                    // Distance between ball centers
+                    float fDistance = sqrtf((ball.px - target.px)*(ball.px - target.px) + (ball.py - target.py)*(ball.py - target.py));
+                    float fOverlap = 0.5f * (fDistance - ball.radius - target.radius);
+                    
+                    // Displace current ball
+                    ball.px -= fOverlap * (ball.px - target.px) / fDistance;
+                    ball.py -= fOverlap * (ball.py - target.py) / fDistance;
+                    
+                    // Displace target ball
+                    target.px += fOverlap * (ball.px - target.px) / fDistance;
+                    target.py += fOverlap * (ball.py - target.py) / fDistance;
+                    
+                }
+            }
+        }
+    }
+}
+
 //This is the main game loop for our program
 void MainGame::gameLoop() {
 
@@ -62,17 +130,7 @@ void MainGame::gameLoop() {
         processInput();
         _time += 0.1;
 
-        _camera.update();
-
-        // Update all bullets
-        for (size_t i = 0; i < _bullets.size();) {
-            if (_bullets[i].update() == true) {
-                _bullets[i] = _bullets.back();
-                _bullets.pop_back();
-            } else {
-                i++;
-            }
-        }
+        update();
 
         drawGame();
 
@@ -146,7 +204,19 @@ void MainGame::processInput() {
         glm::vec2 direction = mouseCoords - playerPosition;
         direction = glm::normalize(direction);
 
-        _bullets.emplace_back(playerPosition, direction, 5.00f, 1000);
+        //_bullets.emplace_back(playerPosition, direction, 5.00f, 1000);
+
+        auto isPointInCircle = [](float x1, float y1, float r1, float px, float py) {
+            return fabs((x1 - px)*(x1 - px) + (y1 - py)*(y1 - py)) < (r1 * r1);
+        };
+        selectedBallIndex = -1;
+        for (size_t i = 0; i < vecBalls.size(); i++) {
+            sBall& ball = vecBalls[i];
+            if (isPointInCircle(ball.px, ball.py, ball.radius, mouseCoords.x, mouseCoords.y)) {
+                selectedBallIndex = i;
+                break;
+            }
+        }
     }
 }
 
@@ -189,6 +259,22 @@ void MainGame::drawGame() {
 
     for (size_t i = 0; i < _bullets.size(); i++) {
         _bullets[i].draw(_spriteBatch);
+    }
+
+    for (auto ball : vecBalls) {
+        
+    glm::vec4 uv(0.0f, 0.0f, 1.0f, 1.0f);
+    static Bengine::GLTexture texture = Bengine::ResourceManager::getTexture("Textures/jimmyJump_pack/PNG/Bullet.png");
+    Bengine::ColorRGBA8 color;
+    color.r = 255;
+    color.g = 255;
+    color.b = 255;
+    color.a = 255;
+
+    glm::vec4 posAndSize = glm::vec4(ball.px, ball.py, ball.radius / 2, ball.radius / 2);
+
+    spriteBatch.draw(posAndSize, uv, texture.id, 0.0f, color, atan2f(ball.vy, ball.vx));
+}
     }
 
     _spriteBatch.end();

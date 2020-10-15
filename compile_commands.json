@@ -1,0 +1,16 @@
+[
+    {
+        "arguments": [
+            "clang++",
+            "-c",
+            "-std=c++14",
+            "-Isrc",
+            "-Ideps/include",
+            "-o",
+            "obj/MainGame.o",
+            "src/MainGame.cpp"
+        ],
+        "directory": "/Volumes/MyTestVolume/Projects/vFOSSGame/FossECS",
+        "file": "src/MainGame.cpp"
+    }
+]
