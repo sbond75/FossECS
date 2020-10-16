@@ -81,7 +81,7 @@ LIBS := $(LINUX_LIBS) $(MACOS_LIBS) -lSDL2 -lSDL2_ttf -lGLEW -lSDL2_mixer -stdli
 
 export MACOSX_DEPLOYMENT_TARGET = 10.15
 
-all: fossECS
+all: ecs
 
 ecs: $(OBJECTS)
 	@echo Detected OS: $(HostOS)
