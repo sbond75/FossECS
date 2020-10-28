@@ -81,15 +81,17 @@ LIBS := $(LINUX_LIBS) $(MACOS_LIBS) -lSDL2 -lSDL2_ttf -lGLEW -lSDL2_mixer -stdli
 
 export MACOSX_DEPLOYMENT_TARGET = 10.15
 
-all: ecs
+EXECUTABLE_RESULT=ecs
 
-ecs: $(OBJECTS)
+all: $(EXECUTABLE_RESULT)
+
+$(EXECUTABLE_RESULT): $(OBJECTS)
 	@echo Detected OS: $(HostOS)
 	 # @echo $(MACOS_LIBS)
 	$(CC) $^ -o $@ $(LIBS) $(LDFLAGS)
 
 $(OBJ)/%.o: $(SRC)/%.cpp
-	$(CC) $(CXXFLAGS) -I$(SRC) -Ideps/include -c $< -o $@
+	$(CC) $(CXXFLAGS) -I$(SRC) -isystemdeps/include -c $< -o $@
 
 clean:
-	rm -f $(OBJECTS)
+	rm -f $(OBJECTS) $(EXECUTABLE_RESULT)
