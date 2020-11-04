@@ -65,7 +65,18 @@ CC := clang++
 SRC := src
 OBJ := obj
 
-CXXFLAGS=$(NIX_CFLAGS_COMPILE) -std=c++14
+# Also add SDL2/ to the include path to fix SDL2_mixer having `:3:
+# /nix/store/19fv4b3cgrpni0mggwqvh214afmaafs9-SDL2_mixer-2.0.4/include/SDL2/SDL_mixer.h:25:10: fatal error: 'SDL_stdinc.h'
+#        file not found
+# #include "SDL_stdinc.h"` we use this:
+# pkg-config is useful, based on https://github.com/NixOS/nixpkgs/issues/32079#issuecomment-347020691 : for example:
+# `echo $(pkg-config --cflags SDL2)` gives:
+# `-D_THREAD_SAFE -I/nix/store/793akkzljrkwqldaqh6k0kp642q0z4lq-SDL2-2.0.12-dev/include/SDL2`
+# and ` echo $(pkg-config --cflags-only-I SDL2)` gives:
+# `-I/nix/store/793akkzljrkwqldaqh6k0kp642q0z4lq-SDL2-2.0.12-dev/include/SDL2`
+ADDITIONAL_SDL_INCLUDES=`pkg-config --cflags-only-I SDL2`
+
+CXXFLAGS=$(NIX_CFLAGS_COMPILE) $(ADDITIONAL_SDL_INCLUDES) -std=c++14 -g3
 LDFLAGS=$(NIX_LDFLAGS)
 
 SOURCES := $(wildcard $(SRC)/*.cpp) $(wildcard $(SRC)/Bengine/*.cpp)
@@ -81,15 +92,17 @@ LIBS := $(LINUX_LIBS) $(MACOS_LIBS) -lSDL2 -lSDL2_ttf -lGLEW -lSDL2_mixer -stdli
 
 export MACOSX_DEPLOYMENT_TARGET = 10.15
 
-all: fossECS
+EXECUTABLE_RESULT=ecs
 
-fossECS: $(OBJECTS)
+all: $(EXECUTABLE_RESULT)
+
+$(EXECUTABLE_RESULT): $(OBJECTS)
 	@echo Detected OS: $(HostOS)
 	 # @echo $(MACOS_LIBS)
 	$(CC) $^ -o $@ $(LIBS) $(LDFLAGS)
 
 $(OBJ)/%.o: $(SRC)/%.cpp
-	$(CC) $(CXXFLAGS) -I$(SRC) -Ideps/include -c $< -o $@
+	$(CC) $(CXXFLAGS) -I$(SRC) -isystemdeps/include -c $< -o $@
 
 clean:
-	rm -f $(OBJECTS)
+	rm -f $(OBJECTS) $(EXECUTABLE_RESULT)

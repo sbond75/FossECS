@@ -25,6 +25,7 @@ MainGame::~MainGame()
 void MainGame::run() {
     initSystems();
 
+    initGame();
  
     //This only returns when the game ends
     gameLoop();
@@ -72,6 +73,7 @@ void MainGame::addBall(float x, float y, float r) {
     b.radius = r;
 
     //b.id = vecBalls.size();
+    vecBalls.emplace_back(b);
 }
 
 void MainGame::update() {
@@ -89,7 +91,7 @@ void MainGame::update() {
 
     auto doCirclesOverlap = [](float x1, float y1, float x2, float y2, float r1, float r2) {
         return fabs((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)) <= (r1+r2)*(r1+r2);
-    }
+    };
     // Update balls
     for (size_t i = 0; i < vecBalls.size(); i++) {
         sBall& ball = vecBalls[i];
@@ -205,18 +207,29 @@ void MainGame::processInput() {
         direction = glm::normalize(direction);
 
         //_bullets.emplace_back(playerPosition, direction, 5.00f, 1000);
-
-        auto isPointInCircle = [](float x1, float y1, float r1, float px, float py) {
-            return fabs((x1 - px)*(x1 - px) + (y1 - py)*(y1 - py)) < (r1 * r1);
-        };
-        selectedBallIndex = -1;
-        for (size_t i = 0; i < vecBalls.size(); i++) {
-            sBall& ball = vecBalls[i];
-            if (isPointInCircle(ball.px, ball.py, ball.radius, mouseCoords.x, mouseCoords.y)) {
-                selectedBallIndex = i;
-                break;
+        
+        if (_inputManager.isKeyPressed(SDL_BUTTON_LEFT)) {   
+            auto isPointInCircle = [](float x1, float y1, float r1, float px, float py) {
+                return fabs((x1 - px)*(x1 - px) + (y1 - py)*(y1 - py)) < (r1 * r1);
+            };
+            selectedBallIndex = -1;
+            for (size_t i = 0; i < vecBalls.size(); i++) {
+                sBall& ball = vecBalls[i];
+                if (isPointInCircle(ball.px, ball.py, ball.radius, mouseCoords.x, mouseCoords.y)) {
+                    selectedBallIndex = i;
+                    break;
+                }
             }
         }
+
+        if (selectedBallIndex != -1) {
+            sBall& b = vecBalls[selectedBallIndex];
+            b.px = mouseCoords.x;
+            b.py = mouseCoords.y;
+        }
+    }
+    else {
+        selectedBallIndex = -1;
     }
 }
 
@@ -261,20 +274,18 @@ void MainGame::drawGame() {
         _bullets[i].draw(_spriteBatch);
     }
 
-    for (auto ball : vecBalls) {
-        
-    glm::vec4 uv(0.0f, 0.0f, 1.0f, 1.0f);
-    static Bengine::GLTexture texture = Bengine::ResourceManager::getTexture("Textures/jimmyJump_pack/PNG/Bullet.png");
-    Bengine::ColorRGBA8 color;
-    color.r = 255;
-    color.g = 255;
-    color.b = 255;
-    color.a = 255;
+    for (auto ball : vecBalls) {        
+        glm::vec4 uv(0.0f, 0.0f, 1.0f, 1.0f);
+        static Bengine::GLTexture texture = Bengine::ResourceManager::getTexture("Textures/jimmyJump_pack/PNG/Bullet.png");
+        Bengine::ColorRGBA8 color;
+        color.r = 255;
+        color.g = 255;
+        color.b = 255;
+        color.a = 255;
 
-    glm::vec4 posAndSize = glm::vec4(ball.px, ball.py, ball.radius / 2, ball.radius / 2);
+        glm::vec4 posAndSize = glm::vec4(ball.px, ball.py, texture.width * (ball.radius / 2), texture.height * (ball.radius / 2));
 
-    spriteBatch.draw(posAndSize, uv, texture.id, 0.0f, color, atan2f(ball.vy, ball.vx));
-}
+        _spriteBatch.draw(posAndSize, uv, texture.id, 0.0f, color, atan2f(ball.vy, ball.vx));
     }
 
     _spriteBatch.end();
