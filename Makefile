@@ -61,7 +61,7 @@ endif
 # https://stackoverflow.com/questions/40621451/makefile-automatically-compile-all-c-files-keeping-o-files-in-separate-folde
 
 #CC := /usr/bin/clang++
-CC := clang++
+CC := c++
 SRC := src
 OBJ := obj
 
@@ -76,7 +76,7 @@ OBJ := obj
 # `-I/nix/store/793akkzljrkwqldaqh6k0kp642q0z4lq-SDL2-2.0.12-dev/include/SDL2`
 ADDITIONAL_SDL_INCLUDES=`pkg-config --cflags-only-I SDL2`
 
-CXXFLAGS=$(NIX_CFLAGS_COMPILE) $(ADDITIONAL_SDL_INCLUDES) -std=c++14 -g3
+CXXFLAGS=$(NIX_CFLAGS_COMPILE) $(ADDITIONAL_SDL_INCLUDES) -std=c++14 -g3 -O0
 LDFLAGS=$(NIX_LDFLAGS)
 
 SOURCES := $(wildcard $(SRC)/*.cpp) $(wildcard $(SRC)/Bengine/*.cpp)

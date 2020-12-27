@@ -9,7 +9,7 @@ This project is based off of a game engine called [Bengine](https://github.com/B
 
 ### macOS and Linux
 
-- To compile, install [Nix](https://nixos.org/download.html), then run `nix-shell` in the project root to enter a shell with the dependencies loaded, and then run `make -j4` to build or rebuild changed cpp files.
+- To compile, install [Nix](https://nixos.org/download.html), then run `mkdir -p obj/Bengine` and `nix-shell` in the project root to enter a shell with the dependencies loaded, and then run `make -j4` to build or rebuild changed cpp files.
 - From the project root, use `./fossECS` to run the game.
 
 ### Windows
