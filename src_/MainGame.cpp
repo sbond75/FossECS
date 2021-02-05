@@ -4,103 +4,6 @@
 
 #include <iostream>
 #include <string>
-#include "Utils.h"
-
-#include <Bengine/ParticleBatch2D.h>
-
-struct ParticleUpdateFunctions {
-
-    static void particleFadeOut(Bengine::Particle2D& particle) {
-		particle.color.a = (GLubyte)(particle.life); //bring down alpha (fade out) as particle life decreases
-	}
-
-    static void particleSlowDown(Bengine::Particle2D& particle, float deltaTime, float decreaseRate = 0.1f) {
-	
-                //slow down over time:
-		//static const float decreaseRate_initial = 0.1f;
-		float decreaseRate_original = decreaseRate;
-
-		//decreaseRate = decreaseRate_original;
-		float abs_velocity_x = abs(particle.velocity.x);
-		if (decreaseRate_original > abs_velocity_x) { //prevent overdecreasing, which causes jittering without this here
-			decreaseRate = abs_velocity_x;
-		}
-		if (particle.velocity.x > 0) {
-			particle.velocity.x -= decreaseRate * deltaTime;
-		}
-		else if (particle.velocity.x < 0) {
-			particle.velocity.x += decreaseRate * deltaTime;
-		}
-
-		decreaseRate = decreaseRate_original;
-		float abs_velocity_y = abs(particle.velocity.y);
-		if (decreaseRate_original > abs_velocity_y) { //prevent overdecreasing, which causes jittering without this here
-			decreaseRate = abs_velocity_y;
-		}
-		if (particle.velocity.y > 0) {
-			particle.velocity.y -= decreaseRate * deltaTime;
-		}
-		else if (particle.velocity.y < 0) {
-			particle.velocity.y += decreaseRate * deltaTime;
-		}
-
-		/* //need to fix... [fixed above!]
-		static const float decreaseRate = 10.1f; //causes shaking if greater than a multiple of particle velocity
-		if (particle.velocity.x > 0) {
-			particle.velocity.x -= decreaseRate;
-		}
-		else if (particle.velocity.x < 0) {
-			particle.velocity.x += decreaseRate;
-		}
-		if (particle.velocity.y > 0) {
-			particle.velocity.y -= decreaseRate;
-		}
-		else if (particle.velocity.y < 0) {
-			particle.velocity.y += decreaseRate;
-		}
-		*/
-		/* //weird thing where stuff with no x velocity doesnt slow down
-		static const float decreaseRate = 0.1f;
-		if (!(particle.velocity.x > -decreaseRate && particle.velocity.x < decreaseRate)) //then need to decrease; otherwise, we are done decreasing
-		{
-			if (particle.velocity.x > 0) {
-				particle.velocity.x -= decreaseRate;
-			}
-			else if (particle.velocity.x < 0) {
-				particle.velocity.x += decreaseRate;
-			}
-			if (particle.velocity.y > 0) {
-				particle.velocity.y -= decreaseRate;
-			}
-			else if (particle.velocity.y < 0) {
-				particle.velocity.y += decreaseRate;
-			}
-		}
-		*/
-		/* //this makes it go out sideways only after going away from center
-		if (particle.velocity.y > 0) {
-			particle.velocity.y -= 0.1f;
-		}
-		else {
-			particle.velocity.y += 0.1f;
-		}
-		*/
-		/* //this does some weird stuff like makes them fall a bit down...
-		if (particle.velocity.y > 0) {
-			particle.velocity.y -= 0.1f;
-		}
-		*/
-	}
-
-
-
-
-	//angular-altering update functions:
-
-	static void particleSpin(Bengine::Particle2D& particle, float deltaTime, float spinRate = 0.1f) {
-		particle.angle += spinRate*deltaTime;
-	}
-};
 
 //Constructor, just initializes private member variables
 MainGame::MainGame() : 
@@ -111,15 +14,6 @@ MainGame::MainGame() :
     _maxFPS(60.0f)
 {
     _camera.init(_screenWidth, _screenHeight);
-    _explosionParticles = new Bengine::ParticleBatch2D();
-    _explosionParticles->init(10000,
-                  1.0f,
-                             Bengine::ResourceManager::getTexture("Textures/jimmyJump_pack/PNG/Bullet.png"),
-                             [](Bengine::Particle2D& particle, float deltaTime) {
-		ParticleUpdateFunctions::particleFadeOut(particle);
-		ParticleUpdateFunctions::particleSpin(particle, deltaTime, 0.01f);
-	});
-    _particleEngine.addParticleBatch(_explosionParticles);
 }
 
 //Destructor
@@ -286,20 +180,6 @@ void MainGame::processInput() {
     }
 
     if (_inputManager.isKeyDown(SDLK_w)) {
-        const GLubyte ALPHA = 1;
-        Bengine::ColorRGBA8 green(30, 255, 50, ALPHA);
-        Bengine::ColorRGBA8 blue(30, 50, 255, ALPHA);
-		_explosionParticles->addParticle(
-                                                {0, 0},
-			glm::vec2(
-				_miscRNG.randFloat(-Bengine::TWO_PI, Bengine::TWO_PI), 
-				_miscRNG.randFloat(-Bengine::TWO_PI, Bengine::TWO_PI)) * _miscRNG.randFloat(-Bengine::TWO_PI, Bengine::TWO_PI
-			),
-                                                blue, 
-			100,
-			_miscRNG.randFloat(0.0f, Bengine::TWO_PI), 
-			_miscRNG.randInt(4, 20)
-		);
         _camera.setPosition(_camera.getPosition() + glm::vec2(0.0f, CAMERA_SPEED));
     }
     if (_inputManager.isKeyDown(SDLK_s)) {

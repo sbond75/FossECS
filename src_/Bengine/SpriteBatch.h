@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "Vertex.h"
-#include "Dimensions.h"
 
 namespace Bengine{
 
@@ -24,10 +23,6 @@ public:
     Glyph(const glm::vec4& destRect, const glm::vec4& uvRect, GLuint Texture, float Depth, const ColorRGBA8& color);
     Glyph(const glm::vec4& destRect, const glm::vec4& uvRect, GLuint Texture, float Depth, const ColorRGBA8& color, float angle);
 
-    Glyph(const glm::vec2& pos, const Dimensions& dims, const glm::vec4& uvRect, GLuint Texture, float Depth, const ColorRGBA8& color);
-    Glyph(const glm::vec2& pos, const Dimensions& dims, const glm::vec4& uvRect, GLuint Texture, float Depth, const ColorRGBA8& color, float angle);
-    Glyph(const glm::vec2& pos, const Dimensions& dims, const glm::vec4& uvRect, GLuint Texture, float Depth, const ColorRGBA8& color, float angle, const glm::vec2& origin); // this allows setting the rotation point for the image (it uses coords relative to the given position, meaning you can use (half width, half height), etc.)
-    
     GLuint texture;
     float depth;
     
@@ -74,18 +69,6 @@ public:
     void draw(const glm::vec4& destRect, const glm::vec4& uvRect, GLuint texture, float depth, const ColorRGBA8& color, float angle);
     // Adds a glyph to the spritebatch with rotation
     void draw(const glm::vec4& destRect, const glm::vec4& uvRect, GLuint texture, float depth, const ColorRGBA8& color, const glm::vec2& dir);
-    
-    // Adds a glyph to the spritebatch
-    void draw(const glm::vec2& pos, const Dimensions& dims, const glm::vec4& uvRect, GLuint texture, float depth, const ColorRGBA8& color);
-    // Adds a glyph to the spritebatch with rotation
-    void draw(const glm::vec2& pos, const Dimensions& dims, const glm::vec4& uvRect, GLuint texture, float depth, const ColorRGBA8& color, float angle);
-    // Adds a glyph to the spritebatch with rotation
-    void draw(const glm::vec2& pos, const Dimensions& dims, const glm::vec4& uvRect, GLuint texture, float depth, const ColorRGBA8& color, const glm::vec2& dir);
-    
-    // Adds a glyph to the spritebatch with rotation and specified origin other than the center
-    void draw(const glm::vec2& pos, const Dimensions& dims, const glm::vec4& uvRect, GLuint texture, float depth, const ColorRGBA8& color, float angle, const glm::vec2& origin);
-    // Adds a glyph to the spritebatch with rotation and specified origin other than the center
-    void draw(const glm::vec2& pos, const Dimensions& dims, const glm::vec4& uvRect, GLuint texture, float depth, const ColorRGBA8& color, const glm::vec2& dir, const glm::vec2& origin);
 
     // Renders the entire SpriteBatch to the screen
     void renderBatch();

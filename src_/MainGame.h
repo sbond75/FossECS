@@ -14,12 +14,10 @@
 #include <Bengine/SpriteBatch.h>
 
 #include <Bengine/Camera2D.h>
-#include <Bengine/ParticleEngine2D.h>
 
 #include "Bullet.h"
 
 #include <vector>
-#include "RNG.h"
 
 
 struct sBall {
@@ -69,10 +67,6 @@ private:
     std::vector<sBall> vecBalls;
     size_t selectedBallIndex = -1;
     //std::vector<std::pair<float, float>> modelCircle; // A circle in its simplest form
-
-    Bengine::ParticleEngine2D _particleEngine;
-    Bengine::ParticleBatch2D* _explosionParticles;
-    RNG _miscRNG;
     
     float _maxFPS;
     float _fps;
