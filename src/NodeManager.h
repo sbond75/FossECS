@@ -87,10 +87,28 @@ struct Node {
         renderer.drawCircle(translation, color, 10);
         
         // Recursively draw the other nodes connected to this one:
-        if (up) up->draw(renderer, {translation.x, translation.y + separationBetweenNodes});
-        if (down) down->draw(renderer, {translation.x, translation.y - separationBetweenNodes});
-        if (left) left->draw(renderer, {translation.x - separationBetweenNodes, translation.y});
-        if (right) right->draw(renderer, {translation.x + separationBetweenNodes, translation.y});
+        glm::vec2 dest;
+        Node* destNode;
+        if (up) {
+            dest = {translation.x, translation.y + separationBetweenNodes};
+            renderer.drawLine(translation, dest, color);
+            up->draw(renderer, dest);
+        }
+        if (down) {
+            dest = {translation.x, translation.y - separationBetweenNodes};
+            renderer.drawLine(translation, dest, color);
+            down->draw(renderer, dest);
+        }
+        if (left) {
+            dest ={translation.x - separationBetweenNodes, translation.y};
+            renderer.drawLine(translation, dest, color);
+            left->draw(renderer, dest);
+        }
+        if (right) {
+            dest = {translation.x + separationBetweenNodes, translation.y};
+            renderer.drawLine(translation, dest, color);
+            right->draw(renderer, dest);
+        }
     }
 };
 
