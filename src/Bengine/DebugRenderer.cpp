@@ -3,7 +3,8 @@
 const float PI = 3.14159265359f;
 
 namespace {
-    const char* VERT_SRC = R"(#version 130
+    const char* VERT_SRC = R"(//#version 130
+#version 400
 //The vertex shader operates on each vertex
 
 //input data from the VBO. Each vertex is 2 floats
@@ -29,7 +30,8 @@ void main() {
     fragmentColor = vertexColor;
 })";
 
-    const char* FRAG_SRC = R"(#version 130
+    const char* FRAG_SRC = R"(//#version 130
+#version 400
 //The fragment shader operates on each pixel in a given polygon
 
 in vec2 fragmentPosition;

@@ -19,6 +19,9 @@
 
 #include <vector>
 
+#include <Bengine/DebugRenderer.h>
+#include "NodeManager.h"
+
 enum class GameState {PLAY, EXIT};
 
 //Our example game class, just for testing purposes right now
@@ -51,6 +54,9 @@ private:
     Bengine::FpsLimiter _fpsLimiter;
 
     std::vector<Bullet> _bullets;
+
+    Bengine::DebugRenderer _debugRenderer;
+    NodeManager _nodeManager;
     
     float _maxFPS;
     float _fps;

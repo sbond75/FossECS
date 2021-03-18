@@ -25,6 +25,8 @@ MainGame::~MainGame()
 void MainGame::run() {
     initSystems();
 
+    // Set clear color
+    glClearColor(33.0f/255, 30.0f/255, 29.0f/255, 255.0f/255); // https://www.colorhexa.com/544c4a , https://www.google.com/search?q=rgb+gray&sxsrf=ALeKk03sgDfTPzROrxCPzCs7P7g_YUlqZg:1616094937547&tbm=isch&source=iu&ictx=1&fir=s13D5erdd7Hs1M%252CMjPIO1o99KpVnM%252C_&vet=1&usg=AI4_-kSWwDH0_v9yLWNyMmVqYl1D3TjpVw&sa=X&ved=2ahUKEwiWzbPlxrrvAhXbTDABHXIZCXAQ9QF6BAgFEAE&biw=1280&bih=676#imgrc=s13D5erdd7Hs1M
  
     //This only returns when the game ends
     gameLoop();
@@ -40,6 +42,7 @@ void MainGame::initSystems() {
     initShaders();
 
     _spriteBatch.init();
+    _debugRenderer.init();
     _fpsLimiter.init(_maxFPS);
 }
 
@@ -106,6 +109,12 @@ void MainGame::processInput() {
                 break;
             case SDL_KEYDOWN:
                 _inputManager.pressKey(evnt.key.keysym.sym);
+                
+                // Forward any just-pressed (and not held) inputs to the NodeManager:
+                if (_inputManager.isKeyPressed(evnt.key.keysym.sym)) {
+                    _nodeManager.receiveKeyPressed(evnt.key.keysym.sym);
+                }
+                
                 break;
             case SDL_KEYUP:
                 _inputManager.releaseKey(evnt.key.keysym.sym);
@@ -148,6 +157,8 @@ void MainGame::processInput() {
 
         _bullets.emplace_back(playerPosition, direction, 5.00f, 1000);
     }
+
+    // Forward any inputs to the NodeManager:    
 }
 
 //Draws the game using the almighty OpenGL
@@ -194,6 +205,11 @@ void MainGame::drawGame() {
     _spriteBatch.end();
 
     _spriteBatch.renderBatch();
+
+    //_debugRenderer.drawCircle({0,0}, color, 10);
+    _nodeManager.draw(_debugRenderer, {0,0});
+    _debugRenderer.end();
+    _debugRenderer.render(cameraMatrix, 2);
 
     //unbind the texture
     glBindTexture(GL_TEXTURE_2D, 0);
