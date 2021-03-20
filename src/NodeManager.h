@@ -167,6 +167,7 @@ private:
     void _draw(Bengine::DebugRenderer& renderer, float deltaTime, const glm::vec2& translation, bool& forceNoActiveDrawing, Node* selectedNode) {
         // Teal: {0,128,128,255}
         Bengine::ColorRGBA8 color = {0,200,200,100}; // Bright teal
+        Bengine::ColorRGBA8 colorBright = {0,255,150,200}; // Brighter teal-like color
         Bengine::ColorRGBA8 red = {150,30,100,100};
         
         // Recursively draw the other nodes connected to this one:
@@ -196,14 +197,12 @@ private:
         // Draw ourselves as the selected node if we have no more `active` nodes to recurse to:
         if (selectedNode == this) {
             // Active node
-            float sizeMultiplier = BezierBlend(sin(SDL_GetTicks()/1000.0f));
-            renderer.drawCircle(translation, color, 20*sizeMultiplier*deltaTime);
+            float sizeMultiplier = 0.5f + BezierBlend(fabsf(sin(SDL_GetTicks()/1000.0f)));
+            renderer.drawCircle(translation, colorBright, 20*sizeMultiplier*0.5f);
         }
-        else {
-            // Regular node
-            renderer.drawCircle(translation, color, 10);
-        }
-
+        // Regular node drawing
+        renderer.drawCircle(translation, color, 10);
+        
         // Draw cycle node if any
         if (cycleNode) {
             dest = glm::vec2{translation.x, translation.y} + glm::vec2(ivec2ForDirection(cycleDirection))*separationBetweenNodes;
