@@ -43,6 +43,14 @@ struct NodeOperation {
     };
 };
 
+// https://stackoverflow.com/questions/13462001/ease-in-and-ease-out-animation-formula
+// `t` goes from 0 to 1.
+// Returns a value from 0 to 1.
+float BezierBlend(float t)
+{
+    return t * t * (3.0f - 2.0f * t);
+}
+
 struct Node {
     static constexpr float separationBetweenNodes = 100.0f; // Distance between each node.
 
@@ -151,12 +159,12 @@ struct Node {
     // `forceNoActiveDrawing` is to make it so recursion stops drawing once we already found who is the first non-active node
 public:
     // `selectedNode` is the highlighted node. It can be found by traversing the linked list formed by the `active` pointers in each `Node` (as done in `move` actually..), but this would be slow so we pass it here.
-    void draw(Bengine::DebugRenderer& renderer, const glm::vec2& translation, Node* selectedNode) {
+    void draw(Bengine::DebugRenderer& renderer, float deltaTime, const glm::vec2& translation, Node* selectedNode) {
         bool forceNoActiveDrawing = false;
-        _draw(renderer, translation, forceNoActiveDrawing, selectedNode);
+        _draw(renderer, deltaTime, translation, forceNoActiveDrawing, selectedNode);
     }
 private:
-    void _draw(Bengine::DebugRenderer& renderer, const glm::vec2& translation, bool& forceNoActiveDrawing, Node* selectedNode) {
+    void _draw(Bengine::DebugRenderer& renderer, float deltaTime, const glm::vec2& translation, bool& forceNoActiveDrawing, Node* selectedNode) {
         // Teal: {0,128,128,255}
         Bengine::ColorRGBA8 color = {0,200,200,100}; // Bright teal
         Bengine::ColorRGBA8 red = {150,30,100,100};
@@ -167,28 +175,29 @@ private:
         if (up) {
             dest = {translation.x, translation.y + separationBetweenNodes};
             renderer.drawLine(translation, dest, color);
-            up->_draw(renderer, dest, forceNoActiveDrawing, selectedNode);
+            up->_draw(renderer, deltaTime, dest, forceNoActiveDrawing, selectedNode);
         }
         if (down) {
             dest = {translation.x, translation.y - separationBetweenNodes};
             renderer.drawLine(translation, dest, color);
-            down->_draw(renderer, dest, forceNoActiveDrawing, selectedNode);
+            down->_draw(renderer, deltaTime, dest, forceNoActiveDrawing, selectedNode);
         }
         if (left) {
             dest ={translation.x - separationBetweenNodes, translation.y};
             renderer.drawLine(translation, dest, color);
-            left->_draw(renderer, dest, forceNoActiveDrawing, selectedNode);
+            left->_draw(renderer, deltaTime, dest, forceNoActiveDrawing, selectedNode);
         }
         if (right) {
             dest = {translation.x + separationBetweenNodes, translation.y};
             renderer.drawLine(translation, dest, color);
-            right->_draw(renderer, dest, forceNoActiveDrawing, selectedNode);
+            right->_draw(renderer, deltaTime, dest, forceNoActiveDrawing, selectedNode);
         }
         
         // Draw ourselves as the selected node if we have no more `active` nodes to recurse to:
         if (selectedNode == this) {
             // Active node
-            renderer.drawCircle(translation, color, 20);
+            float sizeMultiplier = BezierBlend(sin(SDL_GetTicks()/1000.0f));
+            renderer.drawCircle(translation, color, 20*sizeMultiplier*deltaTime);
         }
         else {
             // Regular node
@@ -201,6 +210,8 @@ private:
             renderer.drawLine(translation, dest, red);
         }
     }
+
+public:
 };
 
 class NodeManager {
@@ -303,8 +314,8 @@ public:
         undoStack.pop_back();
     }
 
-    void draw(Bengine::DebugRenderer& renderer, const glm::vec2& pos) {
-        root.draw(renderer, pos, selectedNode);
+    void draw(Bengine::DebugRenderer& renderer, float deltaTime, const glm::vec2& pos) {
+        root.draw(renderer, deltaTime, pos, selectedNode);
     }
 };
 
