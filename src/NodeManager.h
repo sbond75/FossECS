@@ -113,11 +113,11 @@ struct Node {
     }
 
     // thisNode2DPosition is the offset of `this` node from the root node in terms of 2D grid coordinates. In the real editor, each of these integer positions (0, 1, 2, etc.) is separated by `separationBetweenNodes` pixels.
-    void move(Direction dir, std::function<bool(glm::ivec2 fromNode2DPosition, Direction dir, Node* from)> shouldCreateNode, std::function<void(glm::ivec2 fromNode2DPosition, Direction dir, Node* from, Node* to)> onCreateNode, glm::ivec2 thisNode2DPosition={0,0}) {
+    void move(Direction dir, std::function<bool(glm::ivec2 fromNode2DPosition, Direction dir, Node* from)> shouldCreateNode, std::function<void(glm::ivec2 fromNode2DPosition, Direction dir, Node* from, Node* to)> onCreateNode, std::function<void(Node*)> onNavigateToNode, glm::ivec2 thisNode2DPosition={0,0}) {
         assert(position2D == thisNode2DPosition);
         
         if (active) {
-            active->move(dir, shouldCreateNode, onCreateNode, thisNode2DPosition + ivec2ForDirection(activeNodeDirection)); // Forward it to the active node.
+            active->move(dir, shouldCreateNode, onCreateNode, onNavigateToNode, thisNode2DPosition + ivec2ForDirection(activeNodeDirection)); // Forward it to the active node.
             return;
         }
 
@@ -131,14 +131,19 @@ struct Node {
                 // Then we need to re-use this node instead of spawning one:
                 originNode->active = nullptr;
                 originNode->activeNodeDirection = NoDirection;
+                onNavigateToNode(originNode);
                 return;
             }
             *dest = new Node();
             (*dest)->originNode = this;
             (*dest)->originatingDirection = invertDirection(dir);
             (*dest)->position2D = thisNode2DPosition + ivec2ForDirection(dir);
+            onNavigateToNode(*dest);
 
             onCreateNode(thisNode2DPosition, dir, this, *dest);
+        }
+        else {
+            onNavigateToNode(*dest);
         }
         activate(*dest, dir);
     }
@@ -181,10 +186,9 @@ private:
         }
         
         // Draw ourselves as the selected node if we have no more `active` nodes to recurse to:
-        if (active == nullptr && !forceNoActiveDrawing) {
+        if (selectedNode == this) {
             // Active node
             renderer.drawCircle(translation, color, 20);
-            forceNoActiveDrawing = true;
         }
         else {
             // Regular node
@@ -207,11 +211,11 @@ class NodeManager {
     Node* selectedNode;
     
 public:
+    NodeManager() : selectedNode(&root) {}
+    
     // Receives any just-pressed keys (not held).
     void receiveKeyPressed(SDL_Keycode key) {
-        auto shouldCreateNode = [this](glm::ivec2 fromNode2DPosition, Direction dir, Node* from) -> bool {
-            selectedNode = from;
-            
+        auto shouldCreateNode = [this](glm::ivec2 fromNode2DPosition, Direction dir, Node* from) -> bool {      
             // Get the direction of the new node relative to the "from node" (`fromNode2DPosition`):
             glm::ivec2 toNode2DPosition = fromNode2DPosition + Node::ivec2ForDirection(dir);
             
@@ -243,19 +247,22 @@ public:
             // Insert into the map
             nodeAt2DPoint[{toNode2DPosition.x, toNode2DPosition.y}] = to;
         };
+        auto onNavigateToNode = [this](Node* node) {
+            selectedNode = node;
+        };
         
         switch (key) {
         case SDLK_LEFT:
-            root.move(Left, shouldCreateNode, onCreateNode);
+            root.move(Left, shouldCreateNode, onCreateNode, onNavigateToNode);
             break;
         case SDLK_RIGHT:
-            root.move(Right, shouldCreateNode, onCreateNode);
+            root.move(Right, shouldCreateNode, onCreateNode, onNavigateToNode);
             break;
         case SDLK_UP:
-            root.move(Up, shouldCreateNode, onCreateNode);
+            root.move(Up, shouldCreateNode, onCreateNode, onNavigateToNode);
             break;
         case SDLK_DOWN:
-            root.move(Down, shouldCreateNode, onCreateNode);
+            root.move(Down, shouldCreateNode, onCreateNode, onNavigateToNode);
             break;
         case SDLK_u:
             undo();
