@@ -8,6 +8,7 @@
 #include "HashPair.h"
 #include <unordered_map>
 #include <functional>
+#include <Bengine/Timing.h>
 
 enum Direction {
     NoDirection, Left, Right, Up, Down
@@ -61,7 +62,7 @@ float lerp(float a, float b, float f)
 struct Node {
     static constexpr float separationBetweenNodes = 100.0f; // Distance between each node.
 
-    static Uint32 ticksWhenSelectionAnimationStops; // Used for animation in `draw()`.
+    static Uint32 ticksWhenSelectionAnimationStartedToStop; // Used for animation in `draw()`.
     
     glm::ivec2 position2D; // This node's position as multiples of `separationBetweenNodes`.
 
@@ -168,12 +169,12 @@ struct Node {
     // `forceNoActiveDrawing` is to make it so recursion stops drawing once we already found who is the first non-active node
 public:
     // `selectedNode` is the highlighted node. It can be found by traversing the linked list formed by the `active` pointers in each `Node` (as done in `move` actually..), but this would be slow so we pass it here.
-    void draw(Bengine::DebugRenderer& renderer, float deltaTime, const glm::vec2& translation, Node* selectedNode) {
+    void draw(Bengine::DebugRenderer& renderer, const Bengine::FpsLimiter& fpsInfo, const glm::vec2& translation, Node* selectedNode) {
         bool forceNoActiveDrawing = false;
-        _draw(renderer, deltaTime, translation, forceNoActiveDrawing, selectedNode);
+        _draw(renderer, fpsInfo, translation, forceNoActiveDrawing, selectedNode);
     }
 private:
-    void _draw(Bengine::DebugRenderer& renderer, float deltaTime, const glm::vec2& translation, bool& forceNoActiveDrawing, Node* selectedNode) {
+    void _draw(Bengine::DebugRenderer& renderer, const Bengine::FpsLimiter& fpsInfo, const glm::vec2& translation, bool& forceNoActiveDrawing, Node* selectedNode) {
         // Teal: {0,128,128,255}
         Bengine::ColorRGBA8 color = {0,200,200,170}; // Bright teal
         Bengine::ColorRGBA8 colorBright = {0,255,170,250}; // Brighter teal-like color
@@ -185,22 +186,22 @@ private:
         if (up) {
             dest = {translation.x, translation.y + separationBetweenNodes};
             renderer.drawLine(translation, dest, color);
-            up->_draw(renderer, deltaTime, dest, forceNoActiveDrawing, selectedNode);
+            up->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         if (down) {
             dest = {translation.x, translation.y - separationBetweenNodes};
             renderer.drawLine(translation, dest, color);
-            down->_draw(renderer, deltaTime, dest, forceNoActiveDrawing, selectedNode);
+            down->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         if (left) {
             dest ={translation.x - separationBetweenNodes, translation.y};
             renderer.drawLine(translation, dest, color);
-            left->_draw(renderer, deltaTime, dest, forceNoActiveDrawing, selectedNode);
+            left->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         if (right) {
             dest = {translation.x + separationBetweenNodes, translation.y};
             renderer.drawLine(translation, dest, color);
-            right->_draw(renderer, deltaTime, dest, forceNoActiveDrawing, selectedNode);
+            right->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         
         // Draw ourselves as the selected node if we have no more `active` nodes to recurse to:
@@ -212,14 +213,22 @@ private:
             if (left == right && right == up && up == down && down == nullptr) {
                 computeSizeMultiplier();
             }
-            else if (ticksWhenSelectionAnimationStops == 0) {
-                // Initialize `ticksWhenSelectionAnimationStops`:
-                ticksWhenSelectionAnimationStops = SDL_GetTicks() + 1000;
+            else if (ticksWhenSelectionAnimationStartedToStop == 0) {
+                // Initialize `ticksWhenSelectionAnimationStartedToStop`:
+                ticksWhenSelectionAnimationStartedToStop = SDL_GetTicks();
             }
 
-            if (ticksWhenSelectionAnimationStops != 0) {
-                // Before we reach this time, we need to animate to full size.
-                if (ticksWhenSelectionAnimationStops - SDL_GetTicks() >= 0) {
+            if (ticksWhenSelectionAnimationStartedToStop != 0) {
+                // Before we reach ticksWhenSelectionAnimationStartedToStop + 1000, we need to animate to full size.
+                //if (ticksWhenSelectionAnimationStartedToStop + 1000 - SDL_GetTicks() <= 0) { // Side note: if SDL_GetTicks() "wraps" (overflows), then this animation plays almost forever...
+
+                /* Uint32 end = SDL_GetTicks(); */
+                /* Uint32 start = ticksWhenSelectionAnimationStartedToStop; */
+                /* Uint32 interval = 1000; */
+                /* if (end - start >= interval) { // https://www.reddit.com/r/gamedev/comments/245cx8/sdl_getticks_overflow_workaround/ */
+
+                // The only way to prevent overflow seems to be to use an accumulator:
+                fpsInfo.getFrameTime();
                     // We reached the destination time
                     
                 }
@@ -239,7 +248,7 @@ private:
 
 public:
 };
-Uint32 Node::ticksWhenSelectionAnimationStops = 0;
+Uint32 Node::ticksWhenSelectionAnimationStartedToStop = 0;
 
 class NodeManager {
     Node root;
