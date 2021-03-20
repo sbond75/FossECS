@@ -143,10 +143,22 @@ struct Node {
         activate(*dest, dir);
     }
 
-    void draw(Bengine::DebugRenderer& renderer, const glm::vec2& translation) {
+    // `forceNoActiveDrawing` is to make it so recursion stops drawing once we already found who is the first non-active node
+    void draw(Bengine::DebugRenderer& renderer, const glm::vec2& translation, bool forceNoActiveDrawing = false) {
         // Teal: {0,128,128,255}
         Bengine::ColorRGBA8 color = {0,200,200,100}; // Bright teal
-        renderer.drawCircle(translation, color, 10);
+        Bengine::ColorRGBA8 red = {150,30,100,100};
+        
+        // Draw ourselves as the selected node if we have no more `active` nodes to recurse to:
+        if (active == nullptr) {
+            // Active node
+            renderer.drawCircle(translation, color, 20);
+            forceNoActiveDrawing = true;
+        }
+        else if (!forceNoActiveDrawing) {
+            // Regular node
+            renderer.drawCircle(translation, color, 10);
+        }
         
         // Recursively draw the other nodes connected to this one:
         glm::vec2 dest;
@@ -154,22 +166,28 @@ struct Node {
         if (up) {
             dest = {translation.x, translation.y + separationBetweenNodes};
             renderer.drawLine(translation, dest, color);
-            up->draw(renderer, dest);
+            up->draw(renderer, dest, forceNoActiveDrawing);
         }
         if (down) {
             dest = {translation.x, translation.y - separationBetweenNodes};
             renderer.drawLine(translation, dest, color);
-            down->draw(renderer, dest);
+            down->draw(renderer, dest, forceNoActiveDrawing);
         }
         if (left) {
             dest ={translation.x - separationBetweenNodes, translation.y};
             renderer.drawLine(translation, dest, color);
-            left->draw(renderer, dest);
+            left->draw(renderer, dest, forceNoActiveDrawing);
         }
         if (right) {
             dest = {translation.x + separationBetweenNodes, translation.y};
             renderer.drawLine(translation, dest, color);
-            right->draw(renderer, dest);
+            right->draw(renderer, dest, forceNoActiveDrawing);
+        }
+
+        // Draw cycle node if any
+        if (cycleNode) {
+            dest = glm::vec2{translation.x, translation.y} + glm::vec2(ivec2ForDirection(cycleDirection))*separationBetweenNodes;
+            renderer.drawLine(translation, dest, red);
         }
     }
 };
