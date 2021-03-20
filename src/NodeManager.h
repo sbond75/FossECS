@@ -51,9 +51,18 @@ float BezierBlend(float t)
     return t * t * (3.0f - 2.0f * t);
 }
 
+// https://stackoverflow.com/questions/4353525/floating-point-linear-interpolation
+// "To do a linear interpolation between two variables a and b given a fraction f":
+float lerp(float a, float b, float f)
+{
+    return a + f * (b - a);
+}
+
 struct Node {
     static constexpr float separationBetweenNodes = 100.0f; // Distance between each node.
 
+    static Uint32 ticksWhenSelectionAnimationStops; // Used for animation in `draw()`.
+    
     glm::ivec2 position2D; // This node's position as multiples of `separationBetweenNodes`.
 
     Direction cycleDirection = NoDirection; Node* cycleNode = nullptr; // For when a node forms a cycle, `cycleNode` is the node that is joined from `this` to the `cycleNode`.
@@ -166,9 +175,9 @@ public:
 private:
     void _draw(Bengine::DebugRenderer& renderer, float deltaTime, const glm::vec2& translation, bool& forceNoActiveDrawing, Node* selectedNode) {
         // Teal: {0,128,128,255}
-        Bengine::ColorRGBA8 color = {0,200,200,100}; // Bright teal
-        Bengine::ColorRGBA8 colorBright = {0,255,150,200}; // Brighter teal-like color
-        Bengine::ColorRGBA8 red = {150,30,100,100};
+        Bengine::ColorRGBA8 color = {0,200,200,170}; // Bright teal
+        Bengine::ColorRGBA8 colorBright = {0,255,170,250}; // Brighter teal-like color
+        Bengine::ColorRGBA8 red = {150,30,100,200};
         
         // Recursively draw the other nodes connected to this one:
         glm::vec2 dest;
@@ -197,7 +206,25 @@ private:
         // Draw ourselves as the selected node if we have no more `active` nodes to recurse to:
         if (selectedNode == this) {
             // Active node
-            float sizeMultiplier = 0.5f + BezierBlend(fabsf(sin(SDL_GetTicks()/1000.0f)));
+            float sizeMultiplier;
+#define computeSizeMultiplier() sizeMultiplier = 0.5f + BezierBlend(fabsf(sin(SDL_GetTicks()/1000.0f)));
+            // Only show the node animation if we didn't make any nodes yet
+            if (left == right && right == up && up == down && down == nullptr) {
+                computeSizeMultiplier();
+            }
+            else if (ticksWhenSelectionAnimationStops == 0) {
+                // Initialize `ticksWhenSelectionAnimationStops`:
+                ticksWhenSelectionAnimationStops = SDL_GetTicks() + 1000;
+            }
+
+            if (ticksWhenSelectionAnimationStops != 0) {
+                // Before we reach this time, we need to animate to full size.
+                if (ticksWhenSelectionAnimationStops - SDL_GetTicks() >= 0) {
+                    // We reached the destination time
+                    
+                }
+            }
+            
             renderer.drawCircle(translation, colorBright, 20*sizeMultiplier*0.5f);
         }
         // Regular node drawing
@@ -212,6 +239,7 @@ private:
 
 public:
 };
+Uint32 Node::ticksWhenSelectionAnimationStops = 0;
 
 class NodeManager {
     Node root;
