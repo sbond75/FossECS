@@ -145,12 +145,13 @@ struct Node {
 
     // `forceNoActiveDrawing` is to make it so recursion stops drawing once we already found who is the first non-active node
 public:
-    void draw(Bengine::DebugRenderer& renderer, const glm::vec2& translation) {
+    // `selectedNode` is the highlighted node. It can be found by traversing the linked list formed by the `active` pointers in each `Node` (as done in `move` actually..), but this would be slow so we pass it here.
+    void draw(Bengine::DebugRenderer& renderer, const glm::vec2& translation, Node* selectedNode) {
         bool forceNoActiveDrawing = false;
-        _draw(renderer, translation, forceNoActiveDrawing);
+        _draw(renderer, translation, forceNoActiveDrawing, selectedNode);
     }
 private:
-    void _draw(Bengine::DebugRenderer& renderer, const glm::vec2& translation, bool& forceNoActiveDrawing) {
+    void _draw(Bengine::DebugRenderer& renderer, const glm::vec2& translation, bool& forceNoActiveDrawing, Node* selectedNode) {
         // Teal: {0,128,128,255}
         Bengine::ColorRGBA8 color = {0,200,200,100}; // Bright teal
         Bengine::ColorRGBA8 red = {150,30,100,100};
@@ -161,31 +162,31 @@ private:
         if (up) {
             dest = {translation.x, translation.y + separationBetweenNodes};
             renderer.drawLine(translation, dest, color);
-            up->_draw(renderer, dest, forceNoActiveDrawing);
+            up->_draw(renderer, dest, forceNoActiveDrawing, selectedNode);
         }
         if (down) {
             dest = {translation.x, translation.y - separationBetweenNodes};
             renderer.drawLine(translation, dest, color);
-            down->_draw(renderer, dest, forceNoActiveDrawing);
+            down->_draw(renderer, dest, forceNoActiveDrawing, selectedNode);
         }
         if (left) {
             dest ={translation.x - separationBetweenNodes, translation.y};
             renderer.drawLine(translation, dest, color);
-            left->_draw(renderer, dest, forceNoActiveDrawing);
+            left->_draw(renderer, dest, forceNoActiveDrawing, selectedNode);
         }
         if (right) {
             dest = {translation.x + separationBetweenNodes, translation.y};
             renderer.drawLine(translation, dest, color);
-            right->_draw(renderer, dest, forceNoActiveDrawing);
+            right->_draw(renderer, dest, forceNoActiveDrawing, selectedNode);
         }
         
         // Draw ourselves as the selected node if we have no more `active` nodes to recurse to:
-        if (active == nullptr) {
+        if (active == nullptr && !forceNoActiveDrawing) {
             // Active node
             renderer.drawCircle(translation, color, 20);
             forceNoActiveDrawing = true;
         }
-        else if (!forceNoActiveDrawing) {
+        else {
             // Regular node
             renderer.drawCircle(translation, color, 10);
         }
@@ -203,11 +204,14 @@ class NodeManager {
     std::vector<NodeOperation> undoStack;
     std::vector<NodeOperation> redoStack;
     std::unordered_map<std::pair<int, int>, Node*, hash_tuple::pair_hash> nodeAt2DPoint;
-
+    Node* selectedNode;
+    
 public:
     // Receives any just-pressed keys (not held).
     void receiveKeyPressed(SDL_Keycode key) {
         auto shouldCreateNode = [this](glm::ivec2 fromNode2DPosition, Direction dir, Node* from) -> bool {
+            selectedNode = from;
+            
             // Get the direction of the new node relative to the "from node" (`fromNode2DPosition`):
             glm::ivec2 toNode2DPosition = fromNode2DPosition + Node::ivec2ForDirection(dir);
             
@@ -293,7 +297,7 @@ public:
     }
 
     void draw(Bengine::DebugRenderer& renderer, const glm::vec2& pos) {
-        root.draw(renderer, pos);
+        root.draw(renderer, pos, selectedNode);
     }
 };
 
