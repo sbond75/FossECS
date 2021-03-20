@@ -144,10 +144,40 @@ struct Node {
     }
 
     // `forceNoActiveDrawing` is to make it so recursion stops drawing once we already found who is the first non-active node
-    void draw(Bengine::DebugRenderer& renderer, const glm::vec2& translation, bool forceNoActiveDrawing = false) {
+public:
+    void draw(Bengine::DebugRenderer& renderer, const glm::vec2& translation) {
+        bool forceNoActiveDrawing = false;
+        _draw(renderer, translation, forceNoActiveDrawing);
+    }
+private:
+    void _draw(Bengine::DebugRenderer& renderer, const glm::vec2& translation, bool& forceNoActiveDrawing) {
         // Teal: {0,128,128,255}
         Bengine::ColorRGBA8 color = {0,200,200,100}; // Bright teal
         Bengine::ColorRGBA8 red = {150,30,100,100};
+        
+        // Recursively draw the other nodes connected to this one:
+        glm::vec2 dest;
+        Node* destNode;
+        if (up) {
+            dest = {translation.x, translation.y + separationBetweenNodes};
+            renderer.drawLine(translation, dest, color);
+            up->_draw(renderer, dest, forceNoActiveDrawing);
+        }
+        if (down) {
+            dest = {translation.x, translation.y - separationBetweenNodes};
+            renderer.drawLine(translation, dest, color);
+            down->_draw(renderer, dest, forceNoActiveDrawing);
+        }
+        if (left) {
+            dest ={translation.x - separationBetweenNodes, translation.y};
+            renderer.drawLine(translation, dest, color);
+            left->_draw(renderer, dest, forceNoActiveDrawing);
+        }
+        if (right) {
+            dest = {translation.x + separationBetweenNodes, translation.y};
+            renderer.drawLine(translation, dest, color);
+            right->_draw(renderer, dest, forceNoActiveDrawing);
+        }
         
         // Draw ourselves as the selected node if we have no more `active` nodes to recurse to:
         if (active == nullptr) {
@@ -158,30 +188,6 @@ struct Node {
         else if (!forceNoActiveDrawing) {
             // Regular node
             renderer.drawCircle(translation, color, 10);
-        }
-        
-        // Recursively draw the other nodes connected to this one:
-        glm::vec2 dest;
-        Node* destNode;
-        if (up) {
-            dest = {translation.x, translation.y + separationBetweenNodes};
-            renderer.drawLine(translation, dest, color);
-            up->draw(renderer, dest, forceNoActiveDrawing);
-        }
-        if (down) {
-            dest = {translation.x, translation.y - separationBetweenNodes};
-            renderer.drawLine(translation, dest, color);
-            down->draw(renderer, dest, forceNoActiveDrawing);
-        }
-        if (left) {
-            dest ={translation.x - separationBetweenNodes, translation.y};
-            renderer.drawLine(translation, dest, color);
-            left->draw(renderer, dest, forceNoActiveDrawing);
-        }
-        if (right) {
-            dest = {translation.x + separationBetweenNodes, translation.y};
-            renderer.drawLine(translation, dest, color);
-            right->draw(renderer, dest, forceNoActiveDrawing);
         }
 
         // Draw cycle node if any
