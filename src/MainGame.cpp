@@ -207,7 +207,7 @@ void MainGame::drawGame() {
     _spriteBatch.renderBatch();
 
     //_debugRenderer.drawCircle({0,0}, color, 10);
-    _nodeManager.draw(_debugRenderer, _fpsLimiter.getDeltaTime(), {0,0});
+    _nodeManager.draw(_debugRenderer, _fpsLimiter, {0,0});
     _debugRenderer.end();
     _debugRenderer.render(cameraMatrix, 2);
 

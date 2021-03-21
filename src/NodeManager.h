@@ -63,6 +63,7 @@ struct Node {
     static constexpr float separationBetweenNodes = 100.0f; // Distance between each node.
 
     static Uint32 ticksWhenSelectionAnimationStartedToStop; // Used for animation in `draw()`.
+    static Uint32 ticksWhenSelectionAnimationStartedToStart; // Used for animation in `draw()`.
     
     glm::ivec2 position2D; // This node's position as multiples of `separationBetweenNodes`.
 
@@ -207,31 +208,56 @@ private:
         // Draw ourselves as the selected node if we have no more `active` nodes to recurse to:
         if (selectedNode == this) {
             // Active node
-            float sizeMultiplier;
-#define computeSizeMultiplier() sizeMultiplier = 0.5f + BezierBlend(fabsf(sin(SDL_GetTicks()/1000.0f)));
+            float sizeMultiplier = 1.0f;
+#define computeSizeMultiplier(ticks) 0.5f + BezierBlend(fabsf(sin(ticks/1000.0f)))
             // Only show the node animation if we didn't make any nodes yet
-            if (left == right && right == up && up == down && down == nullptr) {
-                computeSizeMultiplier();
+            //std::cout << (left == right && right == up && up == down && down == nullptr) << std::endl;
+            if (left == right && right == up && up == down && down == originNode && originNode == nullptr) { // If all these pointers are nullptr, then:
+                ticksWhenSelectionAnimationStartedToStop = 0; // Reset the other timer
+                // Initialize `ticksWhenSelectionAnimationStartedToStart`:
+                ticksWhenSelectionAnimationStartedToStart = SDL_GetTicks();
+                // Animate to the destination time
+                Uint32 end = SDL_GetTicks();
+                Uint32 start = ticksWhenSelectionAnimationStartedToStart;
+                Uint32 interval = 1000;
+                if (end - start >= interval) {
+                    // We reached the destination time, so stop animating "in" and start the regular animation:
+                    sizeMultiplier = computeSizeMultiplier(SDL_GetTicks());
+                }
+                else {
+                    // Animate to the destination time
+                    Uint32 totalChange = end - start;
+                    float old = computeSizeMultiplier(start);
+                    sizeMultiplier = old + BezierBlend(1.0f - (old - totalChange/1000.0f));
+                }
             }
             else if (ticksWhenSelectionAnimationStartedToStop == 0) {
+                ticksWhenSelectionAnimationStartedToStart = 0; // Reset the other timer
                 // Initialize `ticksWhenSelectionAnimationStartedToStop`:
                 ticksWhenSelectionAnimationStartedToStop = SDL_GetTicks();
             }
 
             if (ticksWhenSelectionAnimationStartedToStop != 0) {
                 // Before we reach ticksWhenSelectionAnimationStartedToStop + 1000, we need to animate to full size.
+                // UPDATE: the overflow actually isn't an issue as long as you always use end - start >= interval. Because negative numbers aren't happening with Uint32! That's why. Say `end` overflows (`end` is the current time): then it might be 10. 10 - 9999999 = negative number IF using signed ints, but we are using unsigned so it will be a large positive number and therefore will be greater than `interval` unless `interval` is extremely, extremely big. ( https://devblogs.microsoft.com/oldnewthing/20050531-22/?p=35493 )
                 //if (ticksWhenSelectionAnimationStartedToStop + 1000 - SDL_GetTicks() <= 0) { // Side note: if SDL_GetTicks() "wraps" (overflows), then this animation plays almost forever...
 
-                /* Uint32 end = SDL_GetTicks(); */
-                /* Uint32 start = ticksWhenSelectionAnimationStartedToStop; */
-                /* Uint32 interval = 1000; */
-                /* if (end - start >= interval) { // https://www.reddit.com/r/gamedev/comments/245cx8/sdl_getticks_overflow_workaround/ */
+                Uint32 end = SDL_GetTicks();
+                Uint32 start = ticksWhenSelectionAnimationStartedToStop;
+                Uint32 interval = 1000;
+                if (end - start >= interval) { // https://www.reddit.com/r/gamedev/comments/245cx8/sdl_getticks_overflow_workaround/
 
-                // The only way to prevent overflow seems to be to use an accumulator:
-                fpsInfo.getFrameTime();
-                    // We reached the destination time
-                    
+                    // We reached the destination time, so stop animating
+                    sizeMultiplier = 1.0f;
                 }
+                else {
+                    // Animate to the destination time
+                    Uint32 totalChange = end - start;
+                    float old = computeSizeMultiplier(start);
+                    sizeMultiplier = old + BezierBlend((old - totalChange/1000.0f));
+                }
+                // [Nvm:] The only way to prevent overflow seems to be to use an accumulator:
+                //fpsInfo.getFrameTime();
             }
             
             renderer.drawCircle(translation, colorBright, 20*sizeMultiplier*0.5f);
@@ -249,6 +275,7 @@ private:
 public:
 };
 Uint32 Node::ticksWhenSelectionAnimationStartedToStop = 0;
+Uint32 Node::ticksWhenSelectionAnimationStartedToStart = 0;
 
 class NodeManager {
     Node root;
@@ -339,6 +366,8 @@ public:
             }
             op.addNode_from->active = nullptr;
             op.addNode_from->activeNodeDirection = NoDirection;
+            if (op.addNode_to == selectedNode) // Move our selected node back before the `_to` node so that we don't reference deleted memory once we `delete op.addNode_to;` below:
+                selectedNode = op.addNode_from;
             *from = nullptr;
 
             // Remove the node from the map
@@ -350,8 +379,8 @@ public:
         undoStack.pop_back();
     }
 
-    void draw(Bengine::DebugRenderer& renderer, float deltaTime, const glm::vec2& pos) {
-        root.draw(renderer, deltaTime, pos, selectedNode);
+    void draw(Bengine::DebugRenderer& renderer, const Bengine::FpsLimiter& fpsInfo, const glm::vec2& pos) {
+        root.draw(renderer, fpsInfo, pos, selectedNode);
     }
 };
 
