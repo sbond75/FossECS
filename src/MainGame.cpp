@@ -81,10 +81,10 @@ void MainGame::gameLoop() {
 
         _fps = _fpsLimiter.end();
 
-        //print only once every 10 frames
+        //print only once every 60 frames
         static int frameCounter = 0;
         frameCounter++;
-        if (frameCounter == 10) {
+        if (frameCounter == 60) {
             std::cout << _fps << std::endl;
             frameCounter = 0;
         }
@@ -129,22 +129,22 @@ void MainGame::processInput() {
     }
 
     if (_inputManager.isKeyDown(SDLK_w)) {
-        _camera.setPosition(_camera.getPosition() + glm::vec2(0.0f, CAMERA_SPEED));
+        _camera.setPosition(_camera.getPosition() + glm::vec2(0.0f, CAMERA_SPEED)/_camera.getScale());
     }
     if (_inputManager.isKeyDown(SDLK_s)) {
-        _camera.setPosition(_camera.getPosition() + glm::vec2(0.0f, -CAMERA_SPEED));
+        _camera.setPosition(_camera.getPosition() + glm::vec2(0.0f, -CAMERA_SPEED)/_camera.getScale());
     }
     if (_inputManager.isKeyDown(SDLK_a)) {
-        _camera.setPosition(_camera.getPosition() + glm::vec2(-CAMERA_SPEED, 0.0f));
+        _camera.setPosition(_camera.getPosition() + glm::vec2(-CAMERA_SPEED, 0.0f)/_camera.getScale());
     }
     if (_inputManager.isKeyDown(SDLK_d)) {
-        _camera.setPosition(_camera.getPosition() + glm::vec2(CAMERA_SPEED, 0.0f));
+        _camera.setPosition(_camera.getPosition() + glm::vec2(CAMERA_SPEED, 0.0f)/_camera.getScale());
     }
     if (_inputManager.isKeyDown(SDLK_q)) {
-        _camera.setScale(_camera.getScale() + SCALE_SPEED);
+        _camera.setScale(_camera.getScale() + SCALE_SPEED*_camera.getScale());
     }
     if (_inputManager.isKeyDown(SDLK_e)) {
-        _camera.setScale(_camera.getScale() - SCALE_SPEED);
+        _camera.setScale(_camera.getScale() - SCALE_SPEED*_camera.getScale());
     }
 
     if (_inputManager.isKeyDown(SDL_BUTTON_LEFT)) {

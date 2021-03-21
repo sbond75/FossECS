@@ -223,15 +223,23 @@ private:
                     ticksWhenSelectionAnimationStartedToStart = SDL_GetTicks(); 
                 }
 
+                static bool ranOnce = false;
                 Uint32 start = ticksWhenSelectionAnimationStartedToStart;
-                Uint32 interval = 5000;
+                Uint32 interval = 1000;
                 if (end - start >= interval) {
                     // Start animating normally since we reached the destination time
                     sizeMultiplier = computeSizeMultiplier(end);
+                    if (!ranOnce) {
+                        std::cout << "Done with started to start animation: " << start + interval << " " << end << std::endl;
+                        ranOnce = true;
+                    }
                 }
                 else {
+                    ranOnce = false;
+                    
                     // Lerp into position, starting from where we left off (lerpAcc, which could be 1.0f if we completed the "starting to stop" animation, or any other value if not)
-                    lerpAcc = lerp(lerpAcc, computeSizeMultiplier(end), 0.2);
+                    Uint32 goal = start + interval;
+                    lerpAcc = lerp(lerpAcc, computeSizeMultiplier(((1.0f/(goal-end))*end + (1.0f-1.0f/(goal-end))*goal) / 1.0f /* Weighted average where the weights are based off the time to get from now(end) to the goal */), 0.1);
                     sizeMultiplier = lerpAcc;
                 }
             }
