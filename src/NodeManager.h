@@ -63,7 +63,7 @@ struct Node {
     static constexpr float separationBetweenNodes = 100.0f; // Distance between each node.
 
     static Uint32 ticksWhenSelectionAnimationStartedToStop; // Used for animation in `draw()`.
-    static Uint32 ticksWhenSelectionAnimationStartedToStart; // Used for animation in `draw()`.
+    static float lerpAcc; // Accumulator for lerping (linear interpolation); used for animation in `draw()`.
     
     glm::ivec2 position2D; // This node's position as multiples of `separationBetweenNodes`.
 
@@ -213,28 +213,13 @@ private:
             // Only show the node animation if we didn't make any nodes yet
             //std::cout << (left == right && right == up && up == down && down == nullptr) << std::endl;
             if (left == right && right == up && up == down && down == originNode && originNode == nullptr) { // If all these pointers are nullptr, then:
-                ticksWhenSelectionAnimationStartedToStop = 0; // Reset the other timer
-                // Initialize `ticksWhenSelectionAnimationStartedToStart`:
-                ticksWhenSelectionAnimationStartedToStart = SDL_GetTicks();
-                // Animate to the destination time
-                Uint32 end = SDL_GetTicks();
-                Uint32 start = ticksWhenSelectionAnimationStartedToStart;
-                Uint32 interval = 1000;
-                if (end - start >= interval) {
-                    // We reached the destination time, so stop animating "in" and start the regular animation:
-                    sizeMultiplier = computeSizeMultiplier(SDL_GetTicks());
-                }
-                else {
-                    // Animate to the destination time
-                    Uint32 totalChange = end - start;
-                    float old = computeSizeMultiplier(start);
-                    sizeMultiplier = old + BezierBlend(1.0f - (old - totalChange/1000.0f));
-                }
+                sizeMultiplier = computeSizeMultiplier(SDL_GetTicks());
+                ticksWhenSelectionAnimationStartedToStop = 0; // Reset timer
             }
             else if (ticksWhenSelectionAnimationStartedToStop == 0) {
-                ticksWhenSelectionAnimationStartedToStart = 0; // Reset the other timer
                 // Initialize `ticksWhenSelectionAnimationStartedToStop`:
                 ticksWhenSelectionAnimationStartedToStop = SDL_GetTicks();
+                lerpAcc = computeSizeMultiplier(SDL_GetTicks());
             }
 
             if (ticksWhenSelectionAnimationStartedToStop != 0) {
@@ -252,9 +237,8 @@ private:
                 }
                 else {
                     // Animate to the destination time
-                    Uint32 totalChange = end - start;
-                    float old = computeSizeMultiplier(start);
-                    sizeMultiplier = old + BezierBlend((old - totalChange/1000.0f));
+                    lerpAcc = lerp(lerpAcc, 1.0f, 0.1);
+                    sizeMultiplier = lerpAcc;
                 }
                 // [Nvm:] The only way to prevent overflow seems to be to use an accumulator:
                 //fpsInfo.getFrameTime();
@@ -275,7 +259,7 @@ private:
 public:
 };
 Uint32 Node::ticksWhenSelectionAnimationStartedToStop = 0;
-Uint32 Node::ticksWhenSelectionAnimationStartedToStart = 0;
+float Node::lerpAcc = 0.0f;
 
 class NodeManager {
     Node root;
