@@ -63,6 +63,7 @@ struct Node {
     static constexpr float separationBetweenNodes = 100.0f; // Distance between each node.
 
     static Uint32 ticksWhenSelectionAnimationStartedToStop; // Used for animation in `draw()`.
+    static Uint32 ticksWhenSelectionAnimationStartedToStart; // Used for animation in `draw()`.
     static float lerpAcc; // Accumulator for lerping (linear interpolation); used for animation in `draw()`.
     
     glm::ivec2 position2D; // This node's position as multiples of `separationBetweenNodes`.
@@ -213,13 +214,34 @@ private:
             // Only show the node animation if we didn't make any nodes yet
             //std::cout << (left == right && right == up && up == down && down == nullptr) << std::endl;
             if (left == right && right == up && up == down && down == originNode && originNode == nullptr) { // If all these pointers are nullptr, then:
-                sizeMultiplier = computeSizeMultiplier(SDL_GetTicks());
-                ticksWhenSelectionAnimationStartedToStop = 0; // Reset timer
+                ticksWhenSelectionAnimationStartedToStop = 0; // Reset timer for stopping since we are now starting and not stopping
+                
+                Uint32 end = SDL_GetTicks();
+                
+                // Initialize ticks for animation starting
+                if (ticksWhenSelectionAnimationStartedToStart == 0) {
+                    ticksWhenSelectionAnimationStartedToStart = SDL_GetTicks(); 
+                }
+
+                Uint32 start = ticksWhenSelectionAnimationStartedToStart;
+                Uint32 interval = 5000;
+                if (end - start >= interval) {
+                    // Start animating normally since we reached the destination time
+                    sizeMultiplier = computeSizeMultiplier(end);
+                }
+                else {
+                    // Lerp into position, starting from where we left off (lerpAcc, which could be 1.0f if we completed the "starting to stop" animation, or any other value if not)
+                    lerpAcc = lerp(lerpAcc, computeSizeMultiplier(end), 0.2);
+                    sizeMultiplier = lerpAcc;
+                }
             }
             else if (ticksWhenSelectionAnimationStartedToStop == 0) {
                 // Initialize `ticksWhenSelectionAnimationStartedToStop`:
                 ticksWhenSelectionAnimationStartedToStop = SDL_GetTicks();
                 lerpAcc = computeSizeMultiplier(SDL_GetTicks());
+
+                // We started stopping, so reset the started starting animation:
+                ticksWhenSelectionAnimationStartedToStart = 0;
             }
 
             if (ticksWhenSelectionAnimationStartedToStop != 0) {
@@ -259,6 +281,7 @@ private:
 public:
 };
 Uint32 Node::ticksWhenSelectionAnimationStartedToStop = 0;
+Uint32 Node::ticksWhenSelectionAnimationStartedToStart = 0;
 float Node::lerpAcc = 0.0f;
 
 class NodeManager {
