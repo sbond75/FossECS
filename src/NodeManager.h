@@ -59,6 +59,13 @@ float lerp(float a, float b, float f)
     return a + f * (b - a);
 }
 
+// https://github.com/processing/processing/blob/be7e25187b289f9bfa622113c400e26dd76dc89b/core/src/processing/core/PApplet.java#L5061 , https://stackoverflow.com/questions/43683041/c-equivalent-of-processings-map-function
+float map(float value, float start1, float stop1, float start2, float stop2) {
+    float outgoing =
+        start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
+    return outgoing;
+}
+
 struct Node {
     static constexpr float separationBetweenNodes = 100.0f; // Distance between each node.
 
@@ -239,7 +246,7 @@ private:
                     
                     // Lerp into position, starting from where we left off (lerpAcc, which could be 1.0f if we completed the "starting to stop" animation, or any other value if not)
                     Uint32 goal = start + interval;
-                    lerpAcc = lerp(lerpAcc, computeSizeMultiplier(((1.0f/(goal-end))*end + (1.0f-1.0f/(goal-end))*goal) / 1.0f /* Weighted average where the weights are based off the time to get from now(end) to the goal */), 0.1);
+                    lerpAcc = computeSizeMultiplier(map(end, start, goal, 0, 1) + (1.0f- map(goal, start, goal, 0, 1))); /* Weighted average where the weights are based off the time to get from now(end) to the goal */
                     sizeMultiplier = lerpAcc;
                 }
             }
