@@ -10,6 +10,15 @@
 #include <functional>
 #include <Bengine/Timing.h>
 
+#include <ginac/ginac.h>
+
+// https://stackoverflow.com/questions/321351/initializing-a-union-with-a-non-trivial-constructor
+#include <new> // Required for placement 'new'.
+
+#include <glm/gtx/rotate_vector.hpp>
+
+typedef GiNaC::numeric real; // Real number type (instead of `double`, we have arbitrary precision using GMP (the GNU Multiple Precision library) ( https://www.ginac.de/tutorial/#Numbers )
+
 enum Direction {
     NoDirection, Left, Right, Up, Down
 };
@@ -47,24 +56,60 @@ struct NodeOperation {
 // https://stackoverflow.com/questions/13462001/ease-in-and-ease-out-animation-formula
 // `t` goes from 0 to 1.
 // Returns a value from 0 to 1.
-float BezierBlend(float t)
+static float BezierBlend(float t)
 {
     return t * t * (3.0f - 2.0f * t);
 }
 
 // https://stackoverflow.com/questions/4353525/floating-point-linear-interpolation
 // "To do a linear interpolation between two variables a and b given a fraction f":
-float lerp(float a, float b, float f)
+static float lerp(float a, float b, float f)
 {
     return a + f * (b - a);
 }
 
 // https://github.com/processing/processing/blob/be7e25187b289f9bfa622113c400e26dd76dc89b/core/src/processing/core/PApplet.java#L5061 , https://stackoverflow.com/questions/43683041/c-equivalent-of-processings-map-function
-float map(float value, float start1, float stop1, float start2, float stop2) {
+static float map(float value, float start1, float stop1, float start2, float stop2) {
     float outgoing =
         start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
     return outgoing;
 }
+
+// This is sort of an "edge" from graph theory. But in circuits this is a "branch," or put simply, a "circuit element" like a resistor.
+struct NodeBranch {
+    NodeBranch() : type(None) {}
+    ~NodeBranch() {
+        switch (type) {
+        case None:
+            break;
+        case Resistor:
+            resistor_resistance.~symbol(); // Call destructor manually ( https://stackoverflow.com/questions/40106941/is-a-union-members-destructor-called )
+            break;
+        }
+    }
+    void reset() {
+        std::cout << this << std::endl;
+        this->~NodeBranch();
+        type = None;
+    }
+    
+    enum Type {
+        None, // No branch present
+        Resistor // A resistor on an electric circuit
+    };
+    Type type;
+    
+    union {
+        struct {
+            GiNaC::symbol resistor_resistance;
+        };
+    };
+    GiNaC::symbol current;
+};
+
+struct NodeJunctionDetails {
+    GiNaC::symbol nodeVoltage; // Keep?
+};
 
 struct Node {
     static constexpr float separationBetweenNodes = 100.0f; // Distance between each node.
@@ -72,6 +117,9 @@ struct Node {
     static Uint32 ticksWhenSelectionAnimationStartedToStop; // Used for animation in `draw()`.
     static Uint32 ticksWhenSelectionAnimationStartedToStart; // Used for animation in `draw()`.
     static float lerpAcc; // Accumulator for lerping (linear interpolation); used for animation in `draw()`.
+
+    NodeBranch branchDetails; // Details about the branch ("edge" from graph theory), if any, from this node to `originNode`.
+    NodeJunctionDetails juncDetails; // Details about the node as a junction in an electric circuit, aka a "node" in a circuit or graph theory. For example, this could be a node voltage?
     
     glm::ivec2 position2D; // This node's position as multiples of `separationBetweenNodes`.
 
@@ -189,27 +237,55 @@ private:
         Bengine::ColorRGBA8 colorBright = {0,255,170,250}; // Brighter teal-like color
         Bengine::ColorRGBA8 red = {150,30,100,200};
         
+        // Draw the branch (could be just a line, or a resistor, etc.)
+        std::function<void(const glm::vec2& pos1, const glm::vec2& pos2, const Bengine::ColorRGBA8& color)> drawBranch;
+        switch (branchDetails.type) {
+        case NodeBranch::None:
+            drawBranch = [&renderer](const glm::vec2& pos1, const glm::vec2& pos2, const Bengine::ColorRGBA8& color) {
+                renderer.drawLine(pos1, pos2, color);
+            };
+            break; // Use `drawBranch` defined above
+        case NodeBranch::Resistor:
+            // Draw resistor
+            drawBranch = [&renderer](const glm::vec2& pos1, const glm::vec2& pos2, const Bengine::ColorRGBA8& color) {
+                float d = glm::distance(pos1, pos2);
+                glm::vec2 unit = glm::normalize(pos2 - pos1);
+                
+                glm::vec2 currentPos = pos1;
+                glm::vec2 nextPos;
+                float currentSign = 1.0f;
+                float scale = 19.0f;
+                //for (float i = 0; i < d; i += scale /*glm::distance(currentPos, nextPos)*/) {
+                while (glm::distance(currentPos, pos1) < d) {
+                    nextPos = glm::rotate(unit, 45.0f * currentSign) * scale;
+                    renderer.drawLine(currentPos, currentPos + nextPos, color);
+                    currentPos += nextPos;
+                    currentSign = -currentSign;
+                }
+            };
+            break;
+        }
+        
         // Recursively draw the other nodes connected to this one:
         glm::vec2 dest;
-        Node* destNode;
         if (up) {
             dest = {translation.x, translation.y + separationBetweenNodes};
-            renderer.drawLine(translation, dest, color);
+            drawBranch(translation, dest, color);
             up->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         if (down) {
             dest = {translation.x, translation.y - separationBetweenNodes};
-            renderer.drawLine(translation, dest, color);
+            drawBranch(translation, dest, color);
             down->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         if (left) {
             dest ={translation.x - separationBetweenNodes, translation.y};
-            renderer.drawLine(translation, dest, color);
+            drawBranch(translation, dest, color);
             left->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         if (right) {
             dest = {translation.x + separationBetweenNodes, translation.y};
-            renderer.drawLine(translation, dest, color);
+            drawBranch(translation, dest, color);
             right->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         
@@ -295,9 +371,6 @@ private:
 
 public:
 };
-Uint32 Node::ticksWhenSelectionAnimationStartedToStop = 0;
-Uint32 Node::ticksWhenSelectionAnimationStartedToStart = 0;
-float Node::lerpAcc = 0.0f;
 
 class NodeManager {
     Node root;
@@ -305,12 +378,30 @@ class NodeManager {
     std::vector<NodeOperation> redoStack;
     std::unordered_map<std::pair<int, int>, Node*, hash_tuple::pair_hash> nodeAt2DPoint;
     Node* selectedNode;
+    struct InputState {
+        enum {
+            Normal, // Standard, top-level state
+            TypingName,
+            TypingValue
+        } state = Normal;
+        
+        union {
+            struct {
+                Node* typing_target; // Target object for typing a name or value to go to.
+            };
+        };
+
+        // Temporary storage for as the user types in the names and values of something.
+        std::string tempName;
+        std::string tempValue;
+    };
+    InputState inputState; // Like a finite state machine, this is the state of the NodeManager's interpretation of the current keyboard input being supplied. For example, if you just pressed "R" to make a resistor out of a node and its origin node, this `inputState` will ensure that pressing letters on the keyboard will now correspond to entering in the resistor's name or value.
     
 public:
     NodeManager() : selectedNode(&root) {}
     
     // Receives any just-pressed keys (not held).
-    void receiveKeyPressed(SDL_Keycode key) {
+    void receiveKeyPressed(SDL_KeyboardEvent keyEvent) {
         auto shouldCreateNode = [this](glm::ivec2 fromNode2DPosition, Direction dir, Node* from) -> bool {      
             // Get the direction of the new node relative to the "from node" (`fromNode2DPosition`):
             glm::ivec2 toNode2DPosition = fromNode2DPosition + Node::ivec2ForDirection(dir);
@@ -346,26 +437,72 @@ public:
         auto onNavigateToNode = [this](Node* node) {
             selectedNode = node;
         };
-        
-        switch (key) {
-        case SDLK_LEFT:
-            root.move(Left, shouldCreateNode, onCreateNode, onNavigateToNode);
+
+        SDL_Keycode key = keyEvent.keysym.sym;
+    scan:
+        switch (inputState.state) {
+        case InputState::Normal:
+            switch (key) {
+            case SDLK_LEFT:
+                root.move(Left, shouldCreateNode, onCreateNode, onNavigateToNode);
+                break;
+            case SDLK_RIGHT:
+                root.move(Right, shouldCreateNode, onCreateNode, onNavigateToNode);
+                break;
+            case SDLK_UP:
+                root.move(Up, shouldCreateNode, onCreateNode, onNavigateToNode);
+                break;
+            case SDLK_DOWN:
+                root.move(Down, shouldCreateNode, onCreateNode, onNavigateToNode);
+                break;
+            case SDLK_u: // Undo
+                undo();
+                break;
+            case SDLK_r: // Spawn resistor going from selected node to its origin node
+                // Workflow: press r, then type a value for the resistor's resistance (or if you press _ then type a name too at any point along the way -- i.e. at any time, _ will switch to NAME entering instead of value entering), then arrow keys to continue on spawning nodes.
+                Node* o;
+                if ((o = selectedNode->originNode)) {
+                    o->branchDetails.reset(); // Call dtor
+                    o->branchDetails.type = NodeBranch::Resistor;
+                    new (&o->branchDetails.resistor_resistance) GiNaC::symbol("r"); // We need placement new because otherwise we will call the dtor on uninitialized memory as part of assignment (to destruct the previous object before assigning to it).
+                    inputState.state = InputState::TypingValue;
+                    inputState.typing_target = o;
+                }
+            case SDLK_c: // Set current value or variable
+            default:
+                break;
+            }
             break;
-        case SDLK_RIGHT:
-            root.move(Right, shouldCreateNode, onCreateNode, onNavigateToNode);
+        case InputState::TypingValue:
+            // Numbers will keep us in this state, and letters or underscores switch to TypingName.
+            if (key >= SDLK_0 && key <= SDLK_9) {
+                // Type in the value
+                inputState.tempValue += key;
+            }
+            else if ((key >= SDLK_a && key <= SDLK_z) || key == SDLK_UNDERSCORE) {
+                inputState.state = InputState::TypingName;
+            }
+            else {
+                inputState.state = InputState::Normal;
+                goto scan; // Process this event again under a different state
+            }
             break;
-        case SDLK_UP:
-            root.move(Up, shouldCreateNode, onCreateNode, onNavigateToNode);
+        case InputState::TypingName:
+            // Letters and numbers will keep us in this state.
+            std::cout << "ASD:" << inputState.tempName << std::endl;
+            if ((key >= SDLK_a && key <= SDLK_z) || (key >= SDLK_0 && key <= SDLK_9)) {
+                // Letter or number
+                inputState.tempName += key;
+            }
+            else if (key == SDLK_UNDERSCORE) {
+                inputState.state = InputState::TypingValue;
+            }
+            else {
+                inputState.state = InputState::Normal;
+                goto scan; // Process this event again under a different state
+            }
             break;
-        case SDLK_DOWN:
-            root.move(Down, shouldCreateNode, onCreateNode, onNavigateToNode);
-            break;
-        case SDLK_u:
-            undo();
-            break;
-        default:
-            break;
-	}
+        }
     }
 
     // Next: add cycles where you move up to another branch using arrow keys and it creates a cycle which is indicated by a red line

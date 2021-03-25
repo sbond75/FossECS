@@ -76,7 +76,7 @@ OBJ := obj
 # `-I/nix/store/793akkzljrkwqldaqh6k0kp642q0z4lq-SDL2-2.0.12-dev/include/SDL2`
 ADDITIONAL_SDL_INCLUDES=`pkg-config --cflags-only-I SDL2`
 
-CXXFLAGS=$(NIX_CFLAGS_COMPILE) $(ADDITIONAL_SDL_INCLUDES) -std=c++14 -g3 -O0
+CXXFLAGS=$(NIX_CFLAGS_COMPILE) $(ADDITIONAL_SDL_INCLUDES) -std=c++14 -g3 -O0 -Wall
 LDFLAGS=$(NIX_LDFLAGS)
 
 SOURCES := $(wildcard $(SRC)/*.cpp) $(wildcard $(SRC)/Bengine/*.cpp)
@@ -88,7 +88,7 @@ endif
 ifeq ($(HostOS),macOS)
     MACOS_LIBS := -framework OpenGL
 endif
-LIBS := $(LINUX_LIBS) $(MACOS_LIBS) -lSDL2 -lSDL2_ttf -lGLEW -lSDL2_mixer -stdlib=libc++ -lc++fs
+LIBS := $(LINUX_LIBS) $(MACOS_LIBS) -lSDL2 -lSDL2_ttf -lGLEW -lSDL2_mixer -stdlib=libc++ -lc++fs `pkg-config --libs-only-l ginac`
 
 export MACOSX_DEPLOYMENT_TARGET = 10.15
 

@@ -112,7 +112,7 @@ void MainGame::processInput() {
                 
                 // Forward any just-pressed (and not held) inputs to the NodeManager:
                 if (_inputManager.isKeyPressed(evnt.key.keysym.sym)) {
-                    _nodeManager.receiveKeyPressed(evnt.key.keysym.sym);
+                    _nodeManager.receiveKeyPressed(evnt.key);
                 }
                 
                 break;

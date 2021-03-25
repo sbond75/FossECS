@@ -8,8 +8,9 @@ stdenv.mkDerivation rec {
   name = "FossECS";
   src = ./.;
   #nativeLibc = true;
-  buildInputs = [ clang libGL glew glm SDL2 SDL2_mixer SDL2_ttf #CEGUI_
+  buildInputs = [ libGL glew glm SDL2 SDL2_mixer SDL2_ttf #CEGUI_
                   llvmPackages.libstdcxxClang
+                  ginac # https://www.ginac.de/tutorial/#A-comparison-with-other-CAS
                   #glib
                 ];
   patchPhase = ''
@@ -20,7 +21,7 @@ stdenv.mkDerivation rec {
 
   #NIX_CFLAGS_COMPILE = [ "-lm" ];
 
-  nativeBuildInputs = [ pkgconfig ];
+  nativeBuildInputs = [ clang pkgconfig ];
   
   # propagatedBuildInputs = stdenv.lib.optionals stdenv.isDarwin
   #   [ darwin.apple_sdk.frameworks.Cocoa ];
