@@ -238,16 +238,15 @@ private:
         Bengine::ColorRGBA8 red = {150,30,100,200};
         
         // Draw the branch (could be just a line, or a resistor, etc.)
-        std::function<void(const glm::vec2& pos1, const glm::vec2& pos2, const Bengine::ColorRGBA8& color)> drawBranch;
+        std::function<void(const glm::vec2& pos1, const glm::vec2& pos2, const Bengine::ColorRGBA8& color)> drawBranch = [&renderer](const glm::vec2& pos1, const glm::vec2& pos2, const Bengine::ColorRGBA8& color) {
+            renderer.drawLine(pos1, pos2, color);
+        };
         switch (branchDetails.type) {
         case NodeBranch::None:
-            drawBranch = [&renderer](const glm::vec2& pos1, const glm::vec2& pos2, const Bengine::ColorRGBA8& color) {
-                renderer.drawLine(pos1, pos2, color);
-            };
-            break; // Use `drawBranch` defined above
+            break;
         case NodeBranch::Resistor:
             // Draw resistor
-            drawBranch = [&renderer](const glm::vec2& pos1, const glm::vec2& pos2, const Bengine::ColorRGBA8& color) {
+            auto drawResistor = [&renderer](const glm::vec2& pos1, const glm::vec2& pos2, const Bengine::ColorRGBA8& color) {
                 float d = glm::distance(pos1, pos2);
                 glm::vec2 unit = glm::normalize(pos2 - pos1);
                 
@@ -256,13 +255,14 @@ private:
                 float currentSign = 1.0f;
                 float scale = 19.0f;
                 //for (float i = 0; i < d; i += scale /*glm::distance(currentPos, nextPos)*/) {
-                while (glm::distance(currentPos, pos1) < d) {
+                while (glm::distance(currentPos, pos1) < d - scale*0.25f) { // Minor hack: `- scale*0.25f` because we don't want to draw the last "/" line
                     nextPos = glm::rotate(unit, 45.0f * currentSign) * scale;
                     renderer.drawLine(currentPos, currentPos + nextPos, color);
                     currentPos += nextPos;
                     currentSign = -currentSign;
                 }
             };
+            drawResistor({translation.x, translation.y}, glm::vec2{translation.x, translation.y} + glm::vec2(ivec2ForDirection(originatingDirection))*separationBetweenNodes, color);
             break;
         }
         
@@ -270,22 +270,22 @@ private:
         glm::vec2 dest;
         if (up) {
             dest = {translation.x, translation.y + separationBetweenNodes};
-            drawBranch(translation, dest, color);
+            if (up->branchDetails.type == NodeBranch::None) drawBranch(translation, dest, color);
             up->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         if (down) {
             dest = {translation.x, translation.y - separationBetweenNodes};
-            drawBranch(translation, dest, color);
+            if (down->branchDetails.type == NodeBranch::None) drawBranch(translation, dest, color);
             down->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         if (left) {
             dest ={translation.x - separationBetweenNodes, translation.y};
-            drawBranch(translation, dest, color);
+            if (left->branchDetails.type == NodeBranch::None) drawBranch(translation, dest, color);
             left->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         if (right) {
             dest = {translation.x + separationBetweenNodes, translation.y};
-            drawBranch(translation, dest, color);
+            if (right->branchDetails.type == NodeBranch::None) drawBranch(translation, dest, color);
             right->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         
@@ -359,8 +359,10 @@ private:
             
             renderer.drawCircle(translation, colorBright, 20*sizeMultiplier*0.5f);
         }
-        // Regular node drawing
-        renderer.drawCircle(translation, color, 10);
+        if (selectedNode != this || ticksWhenSelectionAnimationStartedToStart != 0) {
+            // Regular node drawing
+            renderer.drawCircle(translation, branchDetails.type != NodeBranch::Resistor ? color : Bengine::ColorRGBA8{200,0,100,color.a}, 10);
+        }
         
         // Draw cycle node if any
         if (cycleNode) {
@@ -460,13 +462,12 @@ public:
                 break;
             case SDLK_r: // Spawn resistor going from selected node to its origin node
                 // Workflow: press r, then type a value for the resistor's resistance (or if you press _ then type a name too at any point along the way -- i.e. at any time, _ will switch to NAME entering instead of value entering), then arrow keys to continue on spawning nodes.
-                Node* o;
-                if ((o = selectedNode->originNode)) {
-                    o->branchDetails.reset(); // Call dtor
-                    o->branchDetails.type = NodeBranch::Resistor;
-                    new (&o->branchDetails.resistor_resistance) GiNaC::symbol("r"); // We need placement new because otherwise we will call the dtor on uninitialized memory as part of assignment (to destruct the previous object before assigning to it).
+                if (selectedNode != nullptr) {
+                    selectedNode->branchDetails.reset(); // Call dtor
+                    selectedNode->branchDetails.type = NodeBranch::Resistor;
+                    new (&selectedNode->branchDetails.resistor_resistance) GiNaC::symbol("r"); // We need placement new because otherwise we will call the dtor on uninitialized memory as part of assignment (to destruct the previous object before assigning to it).
                     inputState.state = InputState::TypingValue;
-                    inputState.typing_target = o;
+                    inputState.typing_target = selectedNode;
                 }
             case SDLK_c: // Set current value or variable
             default:
