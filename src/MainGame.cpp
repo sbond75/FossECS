@@ -44,6 +44,7 @@ void MainGame::initSystems() {
     _spriteBatch.init();
     _debugRenderer.init();
     _fpsLimiter.init(_maxFPS);
+    _spriteFont.init("Fonts/Karla-Regular.ttf", 64);
 }
 
 void MainGame::initShaders() {
@@ -99,6 +100,7 @@ void MainGame::processInput() {
     const float SCALE_SPEED = 0.1f;
 
     //Will keep looping until there are no more events to process
+    bool nodeManagerConsumedInput = false; // Assume false.
     while (SDL_PollEvent(&evnt)) {
         switch (evnt.type) {
             case SDL_QUIT:
@@ -112,7 +114,11 @@ void MainGame::processInput() {
                 
                 // Forward any just-pressed (and not held) inputs to the NodeManager:
                 if (_inputManager.isKeyPressed(evnt.key.keysym.sym)) {
-                    _nodeManager.receiveKeyPressed(evnt.key);
+                    nodeManagerConsumedInput = _nodeManager.receiveKeyPressed(evnt.key);
+                    if (nodeManagerConsumedInput) {
+                        // Mark this as not pressed in the inputManager so that uses of the input manager after this enclosing while loop will not consider it.
+                        _inputManager.releaseKey(evnt.key.keysym.sym);
+                    }
                 }
                 
                 break;
@@ -202,12 +208,13 @@ void MainGame::drawGame() {
         _bullets[i].draw(_spriteBatch);
     }
 
-    _spriteBatch.end();
-
-    _spriteBatch.renderBatch();
-
     //_debugRenderer.drawCircle({0,0}, color, 10);
-    _nodeManager.draw(_debugRenderer, _fpsLimiter, {0,0});
+    RenderTools r{_debugRenderer, _spriteBatch, _spriteFont};
+    _nodeManager.draw(r, _fpsLimiter, {0,0});
+    
+    _spriteBatch.end();
+    _spriteBatch.renderBatch();
+    
     _debugRenderer.end();
     _debugRenderer.render(cameraMatrix, 2);
 

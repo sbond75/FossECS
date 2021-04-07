@@ -4,6 +4,8 @@
 #include <SDL2/SDL.h>
 #include <glm/glm.hpp>
 #include <Bengine/DebugRenderer.h>
+#include <Bengine/SpriteBatch.h>
+#include <Bengine/SpriteFont.h>
 #include <iostream>
 #include "HashPair.h"
 #include <unordered_map>
@@ -16,6 +18,7 @@
 #include <new> // Required for placement 'new'.
 
 #include <glm/gtx/rotate_vector.hpp>
+#include <strstream> // Deprecated in C++98, but is faster and better than stringstream because strstream doesn't copy its buffer when done.
 
 typedef GiNaC::numeric real; // Real number type (instead of `double`, we have arbitrary precision using GMP (the GNU Multiple Precision library) ( https://www.ginac.de/tutorial/#Numbers )
 
@@ -83,25 +86,29 @@ struct NodeBranch {
         case None:
             break;
         case Resistor:
-            resistor_resistance.~symbol(); // Call destructor manually ( https://stackoverflow.com/questions/40106941/is-a-union-members-destructor-called )
+            resistor_resistanceName.~symbol(); // Call destructor manually ( https://stackoverflow.com/questions/40106941/is-a-union-members-destructor-called )
+            resistor_resistanceValue.~real();
             break;
         }
     }
-    void reset() {
-        std::cout << this << std::endl;
-        this->~NodeBranch();
-        type = None;
-    }
-    
+
     enum Type {
         None, // No branch present
         Resistor // A resistor on an electric circuit
     };
+    
+    void reset(Type type = None) {
+        std::cout << this << std::endl;
+        this->~NodeBranch();
+        this->type = type;
+    }
+    
     Type type;
     
     union {
         struct {
-            GiNaC::symbol resistor_resistance;
+            GiNaC::symbol resistor_resistanceName;
+            real resistor_resistanceValue;
         };
     };
     GiNaC::symbol current;
@@ -109,6 +116,12 @@ struct NodeBranch {
 
 struct NodeJunctionDetails {
     GiNaC::symbol nodeVoltage; // Keep?
+};
+
+struct RenderTools {
+    Bengine::DebugRenderer& renderer;
+    Bengine::SpriteBatch& spriteBatch;
+    Bengine::SpriteFont& spriteFont;
 };
 
 struct Node {
@@ -226,12 +239,14 @@ struct Node {
     // `forceNoActiveDrawing` is to make it so recursion stops drawing once we already found who is the first non-active node
 public:
     // `selectedNode` is the highlighted node. It can be found by traversing the linked list formed by the `active` pointers in each `Node` (as done in `move` actually..), but this would be slow so we pass it here.
-    void draw(Bengine::DebugRenderer& renderer, const Bengine::FpsLimiter& fpsInfo, const glm::vec2& translation, Node* selectedNode) {
+    void draw(RenderTools& tools, const Bengine::FpsLimiter& fpsInfo, const glm::vec2& translation, Node* selectedNode) {
         bool forceNoActiveDrawing = false;
-        _draw(renderer, fpsInfo, translation, forceNoActiveDrawing, selectedNode);
+        _draw(tools, fpsInfo, translation, forceNoActiveDrawing, selectedNode);
     }
 private:
-    void _draw(Bengine::DebugRenderer& renderer, const Bengine::FpsLimiter& fpsInfo, const glm::vec2& translation, bool& forceNoActiveDrawing, Node* selectedNode) {
+    void _draw(RenderTools& tools, const Bengine::FpsLimiter& fpsInfo, const glm::vec2& translation, bool& forceNoActiveDrawing, Node* selectedNode) {
+        Bengine::DebugRenderer& renderer = tools.renderer;
+        
         // Teal: {0,128,128,255}
         Bengine::ColorRGBA8 color = {0,200,200,170}; // Bright teal
         Bengine::ColorRGBA8 colorBright = {0,255,170,250}; // Brighter teal-like color
@@ -246,7 +261,10 @@ private:
             break;
         case NodeBranch::Resistor:
             // Draw resistor
-            auto drawResistor = [&renderer](const glm::vec2& pos1, const glm::vec2& pos2, const Bengine::ColorRGBA8& color) {
+            glm::vec2 resistorVec = glm::vec2(ivec2ForDirection(originatingDirection))*separationBetweenNodes;
+            glm::vec2 resistorSize = translation - resistorVec;
+            glm::vec2 resistorPoint = glm::vec2{translation.x, translation.y} + resistorVec;
+            auto drawResistor = [&](const glm::vec2& pos1, const glm::vec2& pos2, const Bengine::ColorRGBA8& color) {
                 float d = glm::distance(pos1, pos2);
                 glm::vec2 unit = glm::normalize(pos2 - pos1);
                 
@@ -261,8 +279,15 @@ private:
                     currentPos += nextPos;
                     currentSign = -currentSign;
                 }
+
+                // Draw resistance
+                std::strstream ss;
+                ss << branchDetails.resistor_resistanceName.get_name() << ": " << branchDetails.resistor_resistanceValue << " ohms";
+                std::ends(ss);
+                tools.spriteFont.draw(tools.spriteBatch, ss.str(), (translation + resistorPoint) / 2.0f /* midpoint */, glm::vec2(0.2), 0.0f, Bengine::ColorRGBA8(255, 255, 255, 255));
+                ss.freeze(false); // Free the memory
             };
-            drawResistor({translation.x, translation.y}, glm::vec2{translation.x, translation.y} + glm::vec2(ivec2ForDirection(originatingDirection))*separationBetweenNodes, color);
+            drawResistor({translation.x, translation.y}, resistorPoint, color);
             break;
         }
         
@@ -271,22 +296,22 @@ private:
         if (up) {
             dest = {translation.x, translation.y + separationBetweenNodes};
             if (up->branchDetails.type == NodeBranch::None) drawBranch(translation, dest, color);
-            up->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
+            up->_draw(tools, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         if (down) {
             dest = {translation.x, translation.y - separationBetweenNodes};
             if (down->branchDetails.type == NodeBranch::None) drawBranch(translation, dest, color);
-            down->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
+            down->_draw(tools, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         if (left) {
             dest ={translation.x - separationBetweenNodes, translation.y};
             if (left->branchDetails.type == NodeBranch::None) drawBranch(translation, dest, color);
-            left->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
+            left->_draw(tools, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         if (right) {
             dest = {translation.x + separationBetweenNodes, translation.y};
             if (right->branchDetails.type == NodeBranch::None) drawBranch(translation, dest, color);
-            right->_draw(renderer, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
+            right->_draw(tools, fpsInfo, dest, forceNoActiveDrawing, selectedNode);
         }
         
         // Draw ourselves as the selected node if we have no more `active` nodes to recurse to:
@@ -381,17 +406,47 @@ class NodeManager {
     std::unordered_map<std::pair<int, int>, Node*, hash_tuple::pair_hash> nodeAt2DPoint;
     Node* selectedNode;
     struct InputState {
-        enum {
+        enum State {
             Normal, // Standard, top-level state
             TypingName,
             TypingValue
-        } state = Normal;
+        };
+        State state = Normal;
         
         union {
             struct {
-                Node* typing_target; // Target object for typing a name or value to go to.
+                Node* typing_target; // Target object for typing a name or value to go to. (valid only if `state` == TypingName or TypingValue)
             };
         };
+
+        // Sets the state but also clears anything else remembered by this InputState object, and also saves those items into the `typing_target` if any.
+        void reset(State state) {
+            // Save values to `typing_target` if needed
+            if (this->state == TypingName || this->state == TypingValue) {
+                switch (typing_target->branchDetails.type) {
+                case NodeBranch::None:
+                    break;
+                case NodeBranch::Resistor:
+                    typing_target->branchDetails.reset(typing_target->branchDetails.type);
+                    // Set resistor name
+                    if (!tempName.empty())
+                        new (&typing_target->branchDetails.resistor_resistanceName) GiNaC::symbol(tempName); // We need placement new because otherwise we will call the dtor on uninitialized memory as part of assignment (to destruct the previous object before assigning to it).
+                    else
+                        new (&typing_target->branchDetails.resistor_resistanceName) GiNaC::symbol();
+                    // Set resistor value
+                    if (!tempValue.empty())
+                        new (&typing_target->branchDetails.resistor_resistanceValue) real(tempValue.c_str());
+                    else
+                        new (&typing_target->branchDetails.resistor_resistanceValue) real();
+                    std::cout << tempValue.c_str() << std::endl;
+                    break;
+                }
+            }
+            
+            this->state = state;
+            tempName.clear();
+            tempValue.clear();
+        }
 
         // Temporary storage for as the user types in the names and values of something.
         std::string tempName;
@@ -403,7 +458,9 @@ public:
     NodeManager() : selectedNode(&root) {}
     
     // Receives any just-pressed keys (not held).
-    void receiveKeyPressed(SDL_KeyboardEvent keyEvent) {
+    // Returns true if this input was "consumed" by the NodeManager, i.e. it should not be used to process more consequences of this keypress from outside of this function anymore.
+    bool receiveKeyPressed(SDL_KeyboardEvent keyEvent) {
+        bool consumedInput = false; // Assume false. We will return this later.
         auto shouldCreateNode = [this](glm::ivec2 fromNode2DPosition, Direction dir, Node* from) -> bool {      
             // Get the direction of the new node relative to the "from node" (`fromNode2DPosition`):
             glm::ivec2 toNode2DPosition = fromNode2DPosition + Node::ivec2ForDirection(dir);
@@ -440,40 +497,65 @@ public:
             selectedNode = node;
         };
 
+        if (keyEvent.type == SDL_MODIFIER_PLZ!!!!!) { handle separately}
         SDL_Keycode key = keyEvent.keysym.sym;
     scan:
         switch (inputState.state) {
+#define breakAndConsumeInput() { consumedInput = true; break; }
         case InputState::Normal:
             switch (key) {
             case SDLK_LEFT:
                 root.move(Left, shouldCreateNode, onCreateNode, onNavigateToNode);
-                break;
+                breakAndConsumeInput();
             case SDLK_RIGHT:
                 root.move(Right, shouldCreateNode, onCreateNode, onNavigateToNode);
-                break;
+                breakAndConsumeInput();
             case SDLK_UP:
                 root.move(Up, shouldCreateNode, onCreateNode, onNavigateToNode);
-                break;
+                breakAndConsumeInput();
             case SDLK_DOWN:
                 root.move(Down, shouldCreateNode, onCreateNode, onNavigateToNode);
-                break;
+                breakAndConsumeInput();
             case SDLK_u: // Undo
                 undo();
-                break;
+                breakAndConsumeInput();
             case SDLK_r: // Spawn resistor going from selected node to its origin node
                 // Workflow: press r, then type a value for the resistor's resistance (or if you press _ then type a name too at any point along the way -- i.e. at any time, _ will switch to NAME entering instead of value entering), then arrow keys to continue on spawning nodes.
                 if (selectedNode != nullptr) {
                     selectedNode->branchDetails.reset(); // Call dtor
                     selectedNode->branchDetails.type = NodeBranch::Resistor;
-                    new (&selectedNode->branchDetails.resistor_resistance) GiNaC::symbol("r"); // We need placement new because otherwise we will call the dtor on uninitialized memory as part of assignment (to destruct the previous object before assigning to it).
-                    inputState.state = InputState::TypingValue;
+                    new (&selectedNode->branchDetails.resistor_resistanceName) GiNaC::symbol(); // We need placement new because otherwise we will call the dtor on uninitialized memory as part of assignment (to destruct the previous object before assigning to it).
+                    new (&selectedNode->branchDetails.resistor_resistanceValue) real();
+                    inputState.state = InputState::State::TypingValue;
                     inputState.typing_target = selectedNode;
                 }
+                breakAndConsumeInput();
             case SDLK_c: // Set current value or variable
+                breakAndConsumeInput();
             default:
                 break;
             }
             break;
+        case InputState::TypingName:
+            // Letters and numbers will keep us in this state.
+            if ((key >= SDLK_a && key <= SDLK_z) || (key >= SDLK_0 && key <= SDLK_9)) {
+                // Letter or number
+                inputState.tempName += key;
+            }
+            else if (key == SDLK_UNDERSCORE) {
+                inputState.state = InputState::State::TypingValue;
+                
+                std::cout << "Typed name:" << inputState.tempName << std::endl;
+                goto scan; // Process this event again under a different state
+            }
+            else if (key <= SDLK_LCTRL && key >= SDLK_RGUI) { // If the key is not a modifier key like shift, ctrl, alt, etc.:
+                inputState.reset(InputState::State::Normal);
+                
+                std::cout << "Typed name:" << inputState.tempName << std::endl;
+                goto scan; // Process this event again under a different state
+            }
+            std::cout << "Typed name:" << inputState.tempName << std::endl;
+            breakAndConsumeInput();
         case InputState::TypingValue:
             // Numbers will keep us in this state, and letters or underscores switch to TypingName.
             if (key >= SDLK_0 && key <= SDLK_9) {
@@ -481,29 +563,22 @@ public:
                 inputState.tempValue += key;
             }
             else if ((key >= SDLK_a && key <= SDLK_z) || key == SDLK_UNDERSCORE) {
-                inputState.state = InputState::TypingName;
-            }
-            else {
-                inputState.state = InputState::Normal;
+                inputState.state = InputState::State::TypingName;
+                
+                std::cout << "Typed value:" << inputState.tempValue << std::endl;
                 goto scan; // Process this event again under a different state
             }
-            break;
-        case InputState::TypingName:
-            // Letters and numbers will keep us in this state.
-            std::cout << "ASD:" << inputState.tempName << std::endl;
-            if ((key >= SDLK_a && key <= SDLK_z) || (key >= SDLK_0 && key <= SDLK_9)) {
-                // Letter or number
-                inputState.tempName += key;
-            }
-            else if (key == SDLK_UNDERSCORE) {
-                inputState.state = InputState::TypingValue;
-            }
-            else {
-                inputState.state = InputState::Normal;
+            else if (key <= SDLK_LCTRL && key >= SDLK_RGUI) { // If the key is not a modifier key like shift, ctrl, alt, etc.:
+                inputState.reset(InputState::State::Normal);
+                
+                std::cout << "Typed value:" << inputState.tempValue << std::endl;
                 goto scan; // Process this event again under a different state
             }
-            break;
+            std::cout << "Typed value:" << inputState.tempValue << std::endl;
+            breakAndConsumeInput();
         }
+
+        return consumedInput;
     }
 
     // Next: add cycles where you move up to another branch using arrow keys and it creates a cycle which is indicated by a red line
@@ -539,8 +614,24 @@ public:
         undoStack.pop_back();
     }
 
-    void draw(Bengine::DebugRenderer& renderer, const Bengine::FpsLimiter& fpsInfo, const glm::vec2& pos) {
-        root.draw(renderer, fpsInfo, pos, selectedNode);
+    void draw(RenderTools& tools, const Bengine::FpsLimiter& fpsInfo, const glm::vec2& pos) {
+        root.draw(tools, fpsInfo, pos, selectedNode);
+        
+        // Draw text that is currently being entered
+        glm::vec2 targetNodePos;
+        if (inputState.typing_target) {
+            targetNodePos = glm::vec2(selectedNode->position2D) * Node::separationBetweenNodes;
+        }
+        switch (inputState.state) {
+        case InputState::Normal:
+            break;
+        case InputState::TypingName:
+            tools.spriteFont.draw(tools.spriteBatch, inputState.tempName.c_str(), targetNodePos, glm::vec2(0.5), 0.0f, Bengine::ColorRGBA8(255, 255, 255, 255));
+            break;
+        case InputState::TypingValue:
+            tools.spriteFont.draw(tools.spriteBatch, inputState.tempValue.c_str(), targetNodePos, glm::vec2(0.5), 0.0f, Bengine::ColorRGBA8(255, 255, 255, 255));
+            break;
+        }
     }
 };
 

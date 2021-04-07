@@ -21,6 +21,7 @@
 
 #include <Bengine/DebugRenderer.h>
 #include "NodeManager.h"
+#include <Bengine/SpriteFont.h>
 
 enum class GameState {PLAY, EXIT};
 
@@ -57,6 +58,7 @@ private:
 
     Bengine::DebugRenderer _debugRenderer;
     NodeManager _nodeManager;
+    Bengine::SpriteFont _spriteFont;
     
     float _maxFPS;
     float _fps;
