@@ -5,6 +5,8 @@
 #include <iostream>
 #include <string>
 
+#include "Physics/Physics.hpp"
+
 //Constructor, just initializes private member variables
 MainGame::MainGame() : 
     _screenWidth(1024),
@@ -112,14 +114,14 @@ void MainGame::processInput() {
             case SDL_KEYDOWN:
                 _inputManager.pressKey(evnt.key.keysym.sym);
                 
-                // Forward any just-pressed (and not held) inputs to the NodeManager:
-                if (_inputManager.isKeyPressed(evnt.key.keysym.sym)) {
-                    nodeManagerConsumedInput = _nodeManager.receiveKeyPressed(evnt.key);
-                    if (nodeManagerConsumedInput) {
-                        // Mark this as not pressed in the inputManager so that uses of the input manager after this enclosing while loop will not consider it.
-                        _inputManager.releaseKey(evnt.key.keysym.sym);
-                    }
-                }
+                // // Forward any just-pressed (and not held) inputs to the NodeManager:
+                // if (_inputManager.isKeyPressed(evnt.key.keysym.sym)) {
+                //     nodeManagerConsumedInput = _nodeManager.receiveKeyPressed(evnt.key);
+                //     if (nodeManagerConsumedInput) {
+                //         // Mark this as not pressed in the inputManager so that uses of the input manager after this enclosing while loop will not consider it.
+                //         _inputManager.releaseKey(evnt.key.keysym.sym);
+                //     }
+                // }
                 
                 break;
             case SDL_KEYUP:
@@ -209,8 +211,8 @@ void MainGame::drawGame() {
     }
 
     //_debugRenderer.drawCircle({0,0}, color, 10);
-    RenderTools r{_debugRenderer, _spriteBatch, _spriteFont};
-    _nodeManager.draw(r, _fpsLimiter, {0,0});
+    //RenderTools r{_debugRenderer, _spriteBatch, _spriteFont};
+    //_nodeManager.draw(r, _fpsLimiter, {0,0});
     
     _spriteBatch.end();
     _spriteBatch.renderBatch();
