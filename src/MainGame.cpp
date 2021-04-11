@@ -31,7 +31,8 @@ void MainGame::run() {
     glClearColor(33.0f/255, 30.0f/255, 29.0f/255, 255.0f/255); // https://www.colorhexa.com/544c4a , https://www.google.com/search?q=rgb+gray&sxsrf=ALeKk03sgDfTPzROrxCPzCs7P7g_YUlqZg:1616094937547&tbm=isch&source=iu&ictx=1&fir=s13D5erdd7Hs1M%252CMjPIO1o99KpVnM%252C_&vet=1&usg=AI4_-kSWwDH0_v9yLWNyMmVqYl1D3TjpVw&sa=X&ved=2ahUKEwiWzbPlxrrvAhXbTDABHXIZCXAQ9QF6BAgFEAE&biw=1280&bih=676#imgrc=s13D5erdd7Hs1M
  
     //This only returns when the game ends
-    gameLoop();
+    //gameLoop();
+    gameLoopPhysics(_debugRenderer, _colorProgram, _window, _camera, _fpsLimiter, _inputManager);
 }
 
 //Initialize SDL and Opengl and whatever else we need

@@ -5,6 +5,8 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
+#include <Bengine/DebugRenderer.h>
+#include "../MainGame.h"
 
 typedef glm::vec2 Vec2;
 
@@ -40,6 +42,7 @@ bool AABBvsAABB( AABB a, AABB b )
 
 
 struct Transform {
+  Transform(float x_, float y_) : x(x_), y(y_) { assert(position.x == x_ && position.y == y_); }
   union { // Union for convenience: can access Transform.position.x or just Transform.x
     Vec2 position;
     struct {
@@ -57,6 +60,13 @@ static_assert(offsetof(Transform, y) - offsetof(Transform, x) == offsetof(Vec2, 
 
 struct MassData
 {
+  MassData(float mass = 1.0f) {
+    setMass(mass);
+  }
+  void setMass(float mass) {
+    this->mass = mass;
+    inv_mass = 1.0f / mass;
+  }
   float mass;
   float inv_mass;
  
@@ -67,11 +77,26 @@ struct MassData
 
 struct Material
 {
+  Material(float density_ = 1.0f, float restitution_ = 1.0f) : density(density_), restitution(restitution_) {}
   float density;
   float restitution;
 };
 
 struct Shape {
+  Shape() {}
+  static Shape&& makeCircle(float radius) {
+    Shape s;
+    s.type = Circle;
+    s.circle_radius = radius;
+    return std::move(s);
+  }
+  static Shape&& makeBox(Vec2 dimensions) {
+    Shape s;
+    s.type = Box;
+    s.box_dimensions = dimensions;
+    return std::move(s);
+  }
+  
   enum Type {
     Box, Circle
   };
@@ -102,6 +127,18 @@ bool CirclevsCircleOptimized(Transform a, Transform b, float radiusA, float radi
 
 struct Body
 {
+  Body(Shape shape_, Material mat_ = Material(), Transform tx_ = Transform(0,0), MassData mass_data_= MassData()) :
+    shape(shape_),
+    tx(tx_),
+    material(mat_),
+    mass_data(mass_data_),
+    velocity(),
+    force(),
+    gravityScale(1.0f),
+    layers(0)
+  {
+    
+  }
   void ComputeAABB(AABB* out) {
     switch (shape.type) {
     case Shape::Box:
@@ -135,6 +172,7 @@ struct Body
 
 struct Pair
 {
+  Pair(Body *a, Body *b) { A = a; B = b; }
   Body *A;
   Body *B;
 };
@@ -151,11 +189,18 @@ struct BroadPhase {
 };
 
 void UpdatePhysics( BroadPhase* bp, float dt );
-void RenderGame( float alpha );
-void gameLoop() {
+void RenderGame(BroadPhase* bp, Bengine::DebugRenderer& _debugRenderer, Bengine::GLSLProgram& _colorProgram, Bengine::Camera2D& _camera, Bengine::Window& _window, float alpha);
+void gameLoopPhysics(Bengine::DebugRenderer& renderer, Bengine::GLSLProgram& _colorProgram, Bengine::Window& _window, Bengine::Camera2D& _camera, Bengine::FpsLimiter& _fpsLimiter, Bengine::InputManager& _inputManager) {
 #define GetCurrentTime() SDL_GetTicks() / 1000.0f // Convert to seconds
 
   BroadPhase bp;
+  GameState _gameState = GameState::PLAY;
+
+  // Spawn objects
+  auto makeBox = [&](Vec2 pos) {    
+    Body b(Shape::makeBox(Vec2(10,10)), Material(), Transform(pos.x,pos.y), MassData());
+    bp.bodies.push_back(b);
+  };
   
   const float fps = 100;
   const float dt = 1 / fps;
@@ -163,10 +208,112 @@ void gameLoop() {
  
   // In units of seconds
   float frameStart = GetCurrentTime( );
+  float _fps;
+  Body* target; // Movement target
  
   // main loop
-  while(true) {
+  while(_gameState != GameState::EXIT) {
     const float currentTime = GetCurrentTime( );
+    _fpsLimiter.begin();
+
+    auto processInput = [&](){
+      SDL_Event evnt;
+
+      const float CAMERA_SPEED = 2.0f;
+      const float SCALE_SPEED = 0.1f;
+
+      //Will keep looping until there are no more events to process
+      bool nodeManagerConsumedInput = false; // Assume false.
+      while (SDL_PollEvent(&evnt)) {
+        switch (evnt.type) {
+	case SDL_QUIT:
+	  _gameState = GameState::EXIT;
+	  break;
+	case SDL_MOUSEMOTION:
+	  _inputManager.setMouseCoords((float)evnt.motion.x, (float)evnt.motion.y);
+	  break;
+	case SDL_KEYDOWN:
+	  _inputManager.pressKey(evnt.key.keysym.sym);
+                
+	  // // Forward any just-pressed (and not held) inputs to the NodeManager:
+	  // if (_inputManager.isKeyPressed(evnt.key.keysym.sym)) {
+	  //     nodeManagerConsumedInput = _nodeManager.receiveKeyPressed(evnt.key);
+	  //     if (nodeManagerConsumedInput) {
+	  //         // Mark this as not pressed in the inputManager so that uses of the input manager after this enclosing while loop will not consider it.
+	  //         _inputManager.releaseKey(evnt.key.keysym.sym);
+	  //     }
+	  // }
+                
+	  break;
+	case SDL_KEYUP:
+	  _inputManager.releaseKey(evnt.key.keysym.sym);
+	  break;
+	case SDL_MOUSEBUTTONDOWN:
+	  _inputManager.pressKey(evnt.button.button);
+	  break;
+	case SDL_MOUSEBUTTONUP:
+	  _inputManager.releaseKey(evnt.button.button);
+	  break;
+        }
+      }
+
+      if (_inputManager.isKeyDown(SDLK_w)) {
+        _camera.setPosition(_camera.getPosition() + glm::vec2(0.0f, CAMERA_SPEED)/_camera.getScale());
+      }
+      if (_inputManager.isKeyDown(SDLK_s)) {
+        _camera.setPosition(_camera.getPosition() + glm::vec2(0.0f, -CAMERA_SPEED)/_camera.getScale());
+      }
+      if (_inputManager.isKeyDown(SDLK_a)) {
+        _camera.setPosition(_camera.getPosition() + glm::vec2(-CAMERA_SPEED, 0.0f)/_camera.getScale());
+      }
+      if (_inputManager.isKeyDown(SDLK_d)) {
+        _camera.setPosition(_camera.getPosition() + glm::vec2(CAMERA_SPEED, 0.0f)/_camera.getScale());
+      }
+      if (_inputManager.isKeyDown(SDLK_q)) {
+        _camera.setScale(_camera.getScale() + SCALE_SPEED*_camera.getScale());
+      }
+      if (_inputManager.isKeyDown(SDLK_e)) {
+        _camera.setScale(_camera.getScale() - SCALE_SPEED*_camera.getScale());
+      }
+
+      if (_inputManager.isKeyDown(SDL_BUTTON_LEFT)) {
+        glm::vec2 mouseCoords = _inputManager.getMouseCoords();
+        mouseCoords = _camera.convertScreenToWorld(mouseCoords);
+        
+        // glm::vec2 playerPosition(0.0f);
+        // glm::vec2 direction = mouseCoords - playerPosition;
+        // direction = glm::normalize(direction);
+
+	// Get object at mouse
+	for (Body& b : bp.bodies) {
+	  AABB a;
+	  b.ComputeAABB(&a);
+	  if (AABBvsAABB(a, {mouseCoords, mouseCoords})) {
+	    // Move this object
+	    target = &b;
+	  }
+	}
+      }
+      else {
+	target = nullptr; // Stop moving any object
+      }
+      
+      if (_inputManager.isKeyDown(SDL_BUTTON_RIGHT)) {
+	glm::vec2 mouseCoords = _inputManager.getMouseCoords();
+        mouseCoords = _camera.convertScreenToWorld(mouseCoords);
+	
+        makeBox(mouseCoords);
+      }
+
+      // Check for mouse moving object
+      if (target != nullptr) {
+        glm::vec2 mouseCoords = _inputManager.getMouseCoords();
+        mouseCoords = _camera.convertScreenToWorld(mouseCoords);
+	
+	target->tx.position = mouseCoords;
+      }
+    };
+    processInput();
   
     // Store the time elapsed since the last frame began
     accumulator += currentTime - frameStart;
@@ -186,8 +333,21 @@ void gameLoop() {
     }
  
     const float alpha = accumulator / dt;
- 
-    RenderGame( alpha );
+
+    
+    _camera.update();
+    
+    RenderGame( &bp, renderer, _colorProgram, _camera, _window, alpha );
+    
+    _fps = _fpsLimiter.end();
+    
+    //print only once every 60 frames
+    static int frameCounter = 0;
+    frameCounter++;
+    if (frameCounter == 60) {
+      std::cout << _fps << std::endl;
+      frameCounter = 0;
+    }
   }
 }
 
@@ -475,13 +635,59 @@ void UpdatePhysics( BroadPhase* bp, float dt ) {
   }
 }
 
-void RenderGame( float alpha ) {
+void RenderGame(BroadPhase* bp, Bengine::DebugRenderer& _debugRenderer, Bengine::GLSLProgram& _colorProgram, Bengine::Camera2D& _camera, Bengine::Window& _window, float alpha) {
   // for shape : game.shapes {
   //   // calculate an interpolated transform for rendering
   //   Transform i = shape.previous * alpha + shape.current * (1.0f - alpha);
   //   shape.previous = shape.current;
   //   shape.Render( i );
   // }
+
+    //Set the base depth to 1.0
+    glClearDepth(1.0);
+    //Clear the color and depth buffer
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    //Enable the shader
+    _colorProgram.use();
+
+    //We are using texture unit 0
+    glActiveTexture(GL_TEXTURE0);
+    //Get the uniform location
+    GLint textureLocation = _colorProgram.getUniformLocation("mySampler");
+    //Tell the shader that the texture is in texture unit 0
+    glUniform1i(textureLocation, 0);
+
+    //Set the camera matrix
+    GLint pLocation = _colorProgram.getUniformLocation("P");
+    glm::mat4 cameraMatrix = _camera.getCameraMatrix();
+
+    glUniformMatrix4fv(pLocation, 1, GL_FALSE, &(cameraMatrix[0][0]));
+    
+  AABB a;
+  for (Body& body : bp->bodies) {
+    switch (body.shape.type) {
+    case Shape::Box:
+      body.ComputeAABB(&a);
+      _debugRenderer.drawBox({a.min.x, a.min.y, a.max.x, a.max.y}, Bengine::ColorRGBA8(255,255,255,255), 0);
+      break;
+    case Shape::Circle:
+      _debugRenderer.drawCircle(body.tx.position, Bengine::ColorRGBA8(255,255,255,255), body.shape.circle_radius);
+      break;
+    }
+  }
+  
+    _debugRenderer.end();
+    _debugRenderer.render(cameraMatrix, 2);
+    
+    //unbind the texture
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    //disable the shader
+    _colorProgram.unuse();
+
+    //Swap our buffer and draw everything to the screen!
+    _window.swapBuffer();
 }
 
 
