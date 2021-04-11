@@ -76,7 +76,7 @@ OBJ := obj
 # `-I/nix/store/793akkzljrkwqldaqh6k0kp642q0z4lq-SDL2-2.0.12-dev/include/SDL2`
 ADDITIONAL_SDL_INCLUDES=`pkg-config --cflags-only-I SDL2`
 
-CXXFLAGS=$(NIX_CFLAGS_COMPILE) $(ADDITIONAL_SDL_INCLUDES) -std=c++14 -g3 -O0 -Wall
+CXXFLAGS=$(NIX_CFLAGS_COMPILE) $(ADDITIONAL_SDL_INCLUDES) -std=c++14 -g3 -O0 -Wall # -mmacosx-version-min=10.15
 LDFLAGS=$(NIX_LDFLAGS)
 
 SOURCES := $(wildcard $(SRC)/*.cpp) $(wildcard $(SRC)/Bengine/*.cpp)

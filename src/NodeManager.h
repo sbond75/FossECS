@@ -497,7 +497,7 @@ public:
             selectedNode = node;
         };
 
-        if (keyEvent.type == SDL_MODIFIER_PLZ!!!!!) { handle separately}
+        //if (keyEvent.type == SDL_MODIFIER_PLZ!!!!!) { handle separately}
         SDL_Keycode key = keyEvent.keysym.sym;
     scan:
         switch (inputState.state) {

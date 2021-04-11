@@ -1,0 +1,27 @@
+$ lldb ecs
+(lldb) target create "ecs"
+Current executable set to '/Volumes/MyTestVolume/Projects/vFOSSGame/FossECS/ecs' (x86_64).
+(lldb) run
+Process 78447 launched: '/Volumes/MyTestVolume/Projects/vFOSSGame/FossECS/ecs' (x86_64)
+2021-04-10 23:40:39.436067-0500 ecs[78447:5505814] [plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x101d64360> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+***   OpenGL Version: 3.3 INTEL-10.4.14   ***
+Process 78447 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = EXC_BAD_INSTRUCTION (code=EXC_I386_INVOP, subcode=0x0)
+    frame #0: 0x0000000100003a6b ecs`AABBvsAABB(m=0x00007ffeefbf2928) at Physics.hpp:462:18
+   459 	  float x_overlap = a_extent + b_extent - abs( n.x );
+   460 	  
+   461 	  // SAT test on x axis
+-> 462 	  if(x_overlap > 0)
+   463 	  {
+   464 	    // Calculate half extents along x axis for each object
+   465 	    float a_extent = (abox.max.y - abox.min.y) / 2;
+Target 0: (ecs) stopped.
+(lldb) bt
+* thread #1, queue = 'com.apple.main-thread', stop reason = EXC_BAD_INSTRUCTION (code=EXC_I386_INVOP, subcode=0x0)
+  * frame #0: 0x0000000100003a6b ecs`AABBvsAABB(m=0x00007ffeefbf2928) at Physics.hpp:462:18
+    frame #1: 0x000000010000274f ecs`UpdatePhysics(bp=0x00007ffeefbf2a40, dt=0.00999999977) at Physics.hpp:611:2
+    frame #2: 0x0000000100001771 ecs`gameLoopPhysics(renderer=0x00007ffeefbf2ca0, _colorProgram=0x00007ffeefbf2b1c, _window=0x00007ffeefbf2b00, _camera=0x00007ffeefbf2b2c, _fpsLimiter=0x00007ffeefbf2c78, _inputManager=0x00007ffeefbf2c20) at Physics.hpp:333:7
+    frame #3: 0x00000001000059ee ecs`MainGame::run(this=0x00007ffeefbf2b00) at MainGame.cpp:35:5
+    frame #4: 0x000000010000fad2 ecs`main(argc=1, argv=0x00007ffeefbf2d40) at main.cpp:6:14
+    frame #5: 0x00007fff69715cc9 libdyld.dylib`start + 1
+(lldb) ^D

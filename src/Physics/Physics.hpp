@@ -135,7 +135,7 @@ struct Body
     velocity(),
     force(),
     gravityScale(1.0f),
-    layers(0)
+    layers(INT_MAX)
   {
     
   }
@@ -285,12 +285,14 @@ void gameLoopPhysics(Bengine::DebugRenderer& renderer, Bengine::GLSLProgram& _co
         // direction = glm::normalize(direction);
 
 	// Get object at mouse
-	for (Body& b : bp.bodies) {
-	  AABB a;
-	  b.ComputeAABB(&a);
-	  if (AABBvsAABB(a, {mouseCoords, mouseCoords})) {
-	    // Move this object
-	    target = &b;
+	if (target == nullptr) {
+	  for (Body& b : bp.bodies) {
+	    AABB a;
+	    b.ComputeAABB(&a);
+	    if (AABBvsAABB(a, {mouseCoords, mouseCoords})) {
+	      // Move this object
+	      target = &b;
+	    }
 	  }
 	}
       }
@@ -492,6 +494,8 @@ bool AABBvsAABB( Manifold *m )
       }
     }
   }
+
+  return false;
 }
 
 bool AABBvsCircle( Manifold *m )
@@ -669,7 +673,7 @@ void RenderGame(BroadPhase* bp, Bengine::DebugRenderer& _debugRenderer, Bengine:
     switch (body.shape.type) {
     case Shape::Box:
       body.ComputeAABB(&a);
-      _debugRenderer.drawBox({a.min.x, a.min.y, a.max.x, a.max.y}, Bengine::ColorRGBA8(255,255,255,255), 0);
+      _debugRenderer.drawBox({a.min.x, a.min.y, a.max.x - a.min.x, a.max.y - a.min.y}, Bengine::ColorRGBA8(255,255,255,255), 0);
       break;
     case Shape::Circle:
       _debugRenderer.drawCircle(body.tx.position, Bengine::ColorRGBA8(255,255,255,255), body.shape.circle_radius);
