@@ -751,6 +751,8 @@ void BroadPhase::GeneratePairs( void )
  
   // Queue manifolds for solving
   {
+    uniquePairs.clear();
+    
     int i = 0;
     while(i < pairs.size( ))
       {
