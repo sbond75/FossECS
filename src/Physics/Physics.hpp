@@ -84,17 +84,22 @@ struct Material
 
 struct Shape {
   Shape() {}
-  static Shape&& makeCircle(float radius) {
+  /*
+  Shape() : type(Circle) {
+    circle_radius = 1.0f;
+  }
+  */
+  static Shape makeCircle(float radius) {
     Shape s;
     s.type = Circle;
     s.circle_radius = radius;
-    return std::move(s);
+    return s;
   }
-  static Shape&& makeBox(Vec2 dimensions) {
+  static Shape makeBox(Vec2 dimensions) {
     Shape s;
     s.type = Box;
     s.box_dimensions = dimensions;
-    return std::move(s);
+    return s;
   }
   
   enum Type {

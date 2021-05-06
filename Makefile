@@ -76,9 +76,9 @@ OBJ := obj
 # `-I/nix/store/793akkzljrkwqldaqh6k0kp642q0z4lq-SDL2-2.0.12-dev/include/SDL2`
 ADDITIONAL_SDL_INCLUDES=`pkg-config --cflags-only-I SDL2`
 
-DEBUG_CXXFLAGS=-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer #-fsanitize=memory
-DEBUG_LDFLAGS=-fsanitize=address -fsanitize-address-use-after-scope
-CXXFLAGS=$(NIX_CFLAGS_COMPILE) $(ADDITIONAL_SDL_INCLUDES) -std=c++14 -g3 -O0 -Wall $(DEBUG_CXXFLAGS) # -mmacosx-version-min=10.15
+#DEBUG_CXXFLAGS=-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer #-fsanitize=memory
+#DEBUG_LDFLAGS=-fsanitize=address -fsanitize-address-use-after-scope
+CXXFLAGS=$(NIX_CFLAGS_COMPILE) $(ADDITIONAL_SDL_INCLUDES) -std=c++14 -g3 -O3 -Wall $(DEBUG_CXXFLAGS) # -mmacosx-version-min=10.15
 LDFLAGS=$(NIX_LDFLAGS) $(DEBUG_LDFLAGS)
 
 SOURCES := $(wildcard $(SRC)/*.cpp) $(wildcard $(SRC)/Bengine/*.cpp)
